@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>M&D World – 400 Days</title>
     
     <!-- Three.js -->
@@ -30,273 +30,119 @@
             color: var(--text);
             user-select: none;
             -webkit-user-select: none;
-            touch-action: none; /* Prevent browser zooming/scrolling */
+            touch-action: none;
+            -webkit-tap-highlight-color: transparent;
         }
 
-        /* UI Overlay */
-        #ui-layer {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            pointer-events: none;
-            z-index: 10;
-        }
+        #ui-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 10; }
 
-        /* Screens */
         .screen {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(255, 255, 255, 0.9);
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            pointer-events: auto;
-            transition: opacity 0.5s;
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(255, 255, 255, 0.95);
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            pointer-events: auto; transition: opacity 0.5s; padding: 20px; box-sizing: border-box;
         }
 
-        .hidden {
-            opacity: 0;
-            pointer-events: none;
-            display: none !important;
-        }
+        .hidden { opacity: 0; pointer-events: none; display: none !important; }
 
-        h1 {
-            font-size: 3rem;
-            color: #ff6b6b;
-            text-shadow: 2px 2px 0px #fff;
-            margin-bottom: 10px;
-            text-align: center;
-        }
+        h1 { font-size: clamp(2rem, 5vw, 3rem); color: #ff6b6b; text-shadow: 2px 2px 0px #fff; margin-bottom: 10px; text-align: center; }
 
-        .form-group {
-            margin: 15px;
-            text-align: center;
-        }
+        .form-group { margin: 15px; text-align: center; width: 100%; max-width: 300px; }
 
         input, select, button {
-            padding: 12px 20px;
-            font-size: 1.1rem;
-            border-radius: 25px;
-            border: 2px solid #ffb7b2;
-            outline: none;
-            font-family: 'Quicksand', sans-serif;
-            margin: 5px;
+            padding: 15px 20px; font-size: 1.1rem; border-radius: 25px; border: 2px solid #ffb7b2;
+            outline: none; font-family: 'Quicksand', sans-serif; margin: 5px; width: 100%; box-sizing: border-box;
         }
 
         button {
-            background: #ff6b6b;
-            color: white;
-            cursor: pointer;
-            border: none;
-            transition: transform 0.1s;
-            box-shadow: 0 4px 10px rgba(255, 107, 107, 0.3);
+            background: #ff6b6b; color: white; cursor: pointer; border: none;
+            transition: transform 0.1s; box-shadow: 0 4px 10px rgba(255, 107, 107, 0.3); font-weight: bold;
         }
+        button:active { transform: scale(0.95); }
+        button:disabled { background: #ccc; cursor: not-allowed; box-shadow: none; }
 
-        button:active {
-            transform: scale(0.95);
-        }
-
-        button:disabled {
-            background: #ccc;
-            cursor: not-allowed;
-        }
-
-        /* In-Game HUD */
-        #hud {
-            position: absolute;
-            top: 20px;
-            right: 20px;
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-            pointer-events: none;
-        }
+        #hud { position: absolute; top: 20px; right: 20px; display: flex; flex-direction: column; gap: 15px; pointer-events: none; }
 
         .action-bar {
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-            pointer-events: auto;
-            background: rgba(255, 255, 255, 0.5);
-            padding: 10px;
-            border-radius: 30px;
-            backdrop-filter: blur(5px);
+            display: flex; flex-direction: column; gap: 15px; pointer-events: auto;
+            background: rgba(255, 255, 255, 0.6); padding: 10px; border-radius: 30px; backdrop-filter: blur(5px);
         }
 
         .action-btn {
-            width: 50px;
-            height: 50px;
-            border-radius: 50%;
-            background: white;
-            font-size: 24px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-            transition: transform 0.1s;
+            width: 55px; height: 55px; border-radius: 50%; background: white; font-size: 26px;
+            display: flex; align-items: center; justify-content: center; cursor: pointer;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1); transition: transform 0.1s;
         }
-        
-        .action-btn:active { transform: scale(0.9); }
+        .action-btn:active { transform: scale(0.9); background: #eee; }
 
-        /* Interaction Panel */
         #interaction-panel {
-            position: absolute;
-            top: 20%;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 80%;
-            max-width: 400px;
-            background: white;
-            padding: 20px;
-            border-radius: 20px;
-            text-align: center;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
-            pointer-events: auto;
-            display: none;
-            border: 4px solid #ffb7b2;
-            z-index: 20;
+            position: absolute; top: 20%; left: 50%; transform: translateX(-50%); width: 85%; max-width: 400px;
+            background: rgba(255, 255, 255, 0.95); padding: 25px; border-radius: 20px; text-align: center;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.15); pointer-events: auto; display: none; border: 4px solid #ffb7b2; z-index: 20;
         }
+        #interaction-panel h3 { margin-top: 0; color: #ff6b6b; font-size: 1.5rem; }
+        #interaction-panel p { font-size: 1.2rem; line-height: 1.6; color: #555; }
+        #interaction-panel button { width: auto; padding: 10px 30px; margin-top: 15px; }
 
-        #interaction-panel h3 { margin-top: 0; color: #ff6b6b; }
-        #interaction-panel p { font-size: 1.1rem; line-height: 1.5; }
-
-        /* Floating Message */
         #floating-message {
-            position: absolute;
-            top: 15%;
-            width: 100%;
-            text-align: center;
-            font-size: 2rem;
-            color: white;
-            text-shadow: 0 0 10px #ff6b6b, 0 0 20px #ff6b6b;
-            font-weight: bold;
-            opacity: 0;
-            transition: opacity 1s;
-            pointer-events: none;
+            position: absolute; top: 15%; width: 100%; text-align: center;
+            font-size: clamp(1.5rem, 4vw, 2.5rem); color: white; text-shadow: 0 0 10px #ff6b6b, 0 0 20px #ff6b6b;
+            font-weight: bold; opacity: 0; transition: opacity 1s; pointer-events: none; padding: 0 20px; box-sizing: border-box;
         }
 
-        /* Chat UI */
         #chat-container {
-            position: absolute;
-            bottom: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 350px;
-            max-width: 90%;
-            height: 200px;
-            display: flex;
-            flex-direction: column;
-            pointer-events: none;
-            z-index: 15;
+            position: absolute; bottom: 30px; left: 50%; transform: translateX(-50%); width: 350px; max-width: 90%;
+            height: 180px; display: flex; flex-direction: column; pointer-events: none; z-index: 15; transition: all 0.3s ease;
         }
-
         #chat-messages {
-            flex: 1;
-            overflow-y: auto;
-            background: rgba(0, 0, 0, 0.3);
-            border-radius: 15px;
-            padding: 10px;
-            margin-bottom: 5px;
-            color: white;
-            font-size: 0.9rem;
-            pointer-events: auto;
-            scrollbar-width: thin;
+            flex: 1; overflow-y: auto; background: rgba(0, 0, 0, 0.3); border-radius: 15px; padding: 10px;
+            margin-bottom: 8px; color: white; font-size: 0.9rem; pointer-events: auto; scrollbar-width: thin;
         }
-
-        .chat-msg { margin-bottom: 4px; text-shadow: 1px 1px 2px black; }
+        .chat-msg { margin-bottom: 6px; text-shadow: 1px 1px 2px black; line-height: 1.4; }
         .chat-name { font-weight: bold; color: #ffb7b2; }
-
-        #chat-input-area {
-            display: flex;
-            pointer-events: auto;
-        }
-
+        #chat-input-area { display: flex; pointer-events: auto; }
         #chat-input {
-            flex: 1;
-            padding: 8px 15px;
-            border-radius: 20px;
-            border: none;
-            background: rgba(255, 255, 255, 0.9);
-            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-            font-size: 0.9rem;
+            flex: 1; padding: 10px 15px; border-radius: 20px; border: none; background: rgba(255, 255, 255, 0.95);
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2); font-size: 1rem; margin: 0;
         }
-
         #chat-send {
-            margin-left: 5px;
-            width: 40px;
-            padding: 0;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border-radius: 50%;
+            margin-left: 8px; width: 45px; height: 45px; padding: 0; display: flex; align-items: center;
+            justify-content: center; border-radius: 50%; margin-top: 0;
         }
 
-        /* Virtual Joystick */
         #joystick-zone {
-            position: absolute;
-            bottom: 40px;
-            left: 40px;
-            width: 120px;
-            height: 120px;
-            background: rgba(255,255,255,0.2);
-            border: 2px solid rgba(255,255,255,0.4);
-            border-radius: 50%;
-            pointer-events: auto;
-            display: none;
-            z-index: 20;
+            position: absolute; bottom: 40px; left: 30px; width: 140px; height: 140px;
+            background: rgba(255,255,255,0.15); border: 2px solid rgba(255,255,255,0.3); border-radius: 50%;
+            pointer-events: auto; display: none; z-index: 20; backdrop-filter: blur(2px);
         }
-        
         #joystick-knob {
-            width: 50px;
-            height: 50px;
-            background: rgba(255, 107, 107, 0.8);
-            border-radius: 50%;
-            position: absolute;
-            top: 35px;
-            left: 35px;
-            pointer-events: none;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+            width: 60px; height: 60px; background: rgba(255, 107, 107, 0.9); border-radius: 50%;
+            position: absolute; top: 40px; left: 40px; pointer-events: none; box-shadow: 0 2px 10px rgba(0,0,0,0.3);
         }
 
         @media (max-width: 768px) {
             #joystick-zone { display: block; }
-            #chat-container { bottom: 180px; width: 300px; height: 150px; }
             #hud { top: 10px; right: 10px; }
-            .action-bar { flex-direction: row; }
+            .action-bar { flex-direction: row; gap: 10px; padding: 8px; }
+            .action-btn { width: 45px; height: 45px; font-size: 20px; }
+            #chat-container { bottom: 200px; width: 280px; height: 120px; }
+            input, select { padding: 15px; font-size: 16px; }
         }
 
-        /* Loading Spinner */
         .loader {
-            border: 5px solid #f3f3f3;
-            border-top: 5px solid #ff6b6b;
-            border-radius: 50%;
-            width: 40px;
-            height: 40px;
-            animation: spin 1s linear infinite;
-            margin: 20px auto;
+            border: 5px solid #f3f3f3; border-top: 5px solid #ff6b6b; border-radius: 50%;
+            width: 40px; height: 40px; animation: spin 1s linear infinite; margin: 20px auto;
         }
-
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     </style>
 </head>
 <body>
 
-    <!-- UI LAYER -->
     <div id="ui-layer">
-        
-        <!-- Login / Lobby Screen -->
         <div id="login-screen" class="screen">
             <div style="font-size: 4rem;">💖</div>
             <h1>M&D World</h1>
             <p>400 Days of Us</p>
-            
             <div class="form-group">
                 <label>I am:</label><br>
                 <select id="char-select">
@@ -304,37 +150,30 @@
                     <option value="douri">Douri 👩‍🦰</option>
                 </select>
             </div>
-
             <div class="form-group">
                 <input type="text" id="room-code" placeholder="Enter Room Code (e.g. LOVE)" value="LOVE">
             </div>
-
             <button id="btn-enter">Enter World</button>
-            <div id="status-msg" style="margin-top: 10px; color: #ff6b6b; height: 20px;"></div>
+            <div id="status-msg" style="margin-top: 15px; color: #ff6b6b; min-height: 20px; font-weight: bold;"></div>
         </div>
 
-        <!-- Gameplay HUD -->
         <div id="game-ui" class="hidden">
             <div id="floating-message"></div>
-            
             <div id="interaction-panel">
                 <h3 id="panel-title">Memory</h3>
                 <p id="panel-text">...</p>
                 <button onclick="closePanel()">Close</button>
             </div>
-
             <div id="joystick-zone">
                 <div id="joystick-knob"></div>
             </div>
-
             <div id="chat-container">
                 <div id="chat-messages"></div>
                 <div id="chat-input-area">
-                    <input type="text" id="chat-input" placeholder="Chat here...">
+                    <input type="text" id="chat-input" placeholder="Say something..." autocomplete="off">
                     <button id="chat-send">➤</button>
                 </div>
             </div>
-
             <div id="hud">
                 <div class="action-bar">
                     <div class="action-btn" onclick="sendEmote('wave')">👋</div>
@@ -350,37 +189,58 @@
         // ==========================================
         // CONFIGURATION & ASSETS
         // ==========================================
-        
         const CONFIG = {
             colors: {
-                skyTop: 0xffdac1,
-                skyBottom: 0xffb7b2,
-                grass: 0x95e06c, 
-                water: 0xa2d2ff,
-                michael: 0x4dabf7, 
-                douri: 0xff8787   
+                skyTop: 0xffdac1, skyBottom: 0xffb7b2, grass: 0x95e06c, water: 0xa2d2ff, michael: 0x4dabf7, douri: 0xff8787   
             },
             worldRadius: 40,
             memories: [
-                { id: 1, x: -10, z: -10, title: "Day 1", text: "Do you remember when we first started talking? I knew then you were special." },
-                { id: 2, x: 10, z: -8, title: "The Park", text: "Our first awkward walk. I wanted to hold your hand so bad!" },
-                { id: 3, x: -12, z: 8, title: "Your Birthday", text: "Seeing you smile at the gazebo was the highlight of my year." },
-                { id: 4, x: 12, z: 5, title: "Comfort", text: "When times were hard, you were my rock. Thank you." },
-                { id: 5, x: 0, z: -18, title: "Inside Joke", text: "Wait... are we still doing that silly voice? Haha!" },
-                { id: 6, x: 15, z: 15, title: "The Sunset", text: "100 Days felt like magic. But 400 feels like destiny." },
-                { id: 7, x: -15, z: 12, title: "Trust", text: "We've built a bridge of trust that nothing can break." },
+                { 
+                    id: 1, x: -10, z: -10, title: "Day 1", 
+                    text: "Do you remember when we first started talking? I knew then you were special.",
+                    image: "https://i.ibb.co/xqgsXQ45/Screenshot-1.png" 
+                },
+                { id: 2, x: 10, z: -8, title: "The Park", text: "Our first awkward walk. I wanted to hold your hand so bad!", image: "" },
+                { id: 3, x: -12, z: 8, title: "Your Birthday", text: "Seeing you smile at the gazebo was the highlight of my year.", image: "" },
+                { id: 4, x: 12, z: 5, title: "Comfort", text: "When times were hard, you were my rock. Thank you.", image: "" },
+                { id: 5, x: 0, z: -18, title: "Inside Joke", text: "Wait... are we still doing that silly voice? Haha!", image: "" },
+                { id: 6, x: 15, z: 15, title: "The Sunset", text: "100 Days felt like magic. But 400 feels like destiny.", image: "" },
+                { id: 7, x: -15, z: 12, title: "Trust", text: "We've built a bridge of trust that nothing can break.", image: "" },
                 { id: 8, x: 0, z: 0, title: "400 Days", text: "Stand here together...", isFinal: true } 
             ]
         };
 
         // ==========================================
-        // FIREBASE SETUP
+        // FIREBASE SETUP - STANDALONE
         // ==========================================
-        const firebaseConfig = JSON.parse(__firebase_config);
-        const app = firebase.initializeApp(firebaseConfig);
-        const auth = firebase.auth();
-        const db = firebase.firestore();
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'md-world-default';
+        
+        // YOUR CONFIGURATION (Fixed)
+        const firebaseConfig = {
+            apiKey: "AIzaSyCK7b_WlKXv4Kkh6V90UeL9lHjTeKehSwY",
+            authDomain: "michael-and-douris-world.firebaseapp.com",
+            projectId: "michael-and-douris-world",
+            storageBucket: "michael-and-douris-world.firebasestorage.app",
+            messagingSenderId: "769522697028",
+            appId: "1:769522697028:web:46dd6f8defa961cd228d11",
+            measurementId: "G-LDPD7FXQ8Z"
+        };
+
+        // Initialize Firebase
+        // We removed the duplicate/incorrect 'const app = ...' lines that were causing the crash.
+        let app, auth, db;
+        let isConfigured = false;
+        const appId = 'md-world-public'; 
+
+        try {
+            // Using the global 'firebase' object from the CDN scripts
+            app = firebase.initializeApp(firebaseConfig);
+            auth = firebase.auth();
+            db = firebase.firestore();
+            isConfigured = true;
+            console.log("Firebase Initialized Successfully");
+        } catch (e) {
+            console.error("Firebase Init Error:", e);
+        }
 
         let myUser = null;
         let roomId = "LOVE";
@@ -394,433 +254,240 @@
         // THREE.JS SETUP
         // ==========================================
         let scene, camera, renderer, clock;
-        let myMesh, myAnimParts; 
+        let myMesh; 
         let input = { x: 0, y: 0 }; 
-        
-        // Camera Variables
-        let camAngleH = 0; // Horizontal angle (radians)
-        let camAngleV = 0.5; // Vertical angle (radians)
+        let textureLoader;
+        let camAngleH = 0; 
+        let camAngleV = 0.5; 
         let camDist = 14;
         let isDragging = false;
         let previousMouse = { x: 0, y: 0 };
 
-        // Groups
         const worldGroup = new THREE.Group();
         const playersGroup = new THREE.Group();
         const animalsGroup = new THREE.Group();
         
-        // Initialize
         function initGame() {
-            // Scene
             scene = new THREE.Scene();
             scene.background = new THREE.Color(CONFIG.colors.skyTop);
             scene.fog = new THREE.FogExp2(CONFIG.colors.skyBottom, 0.015);
 
-            // Camera
             camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
             
-            // Renderer
             renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
             renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2)); 
             renderer.shadowMap.enabled = true;
             renderer.shadowMap.type = THREE.PCFSoftShadowMap;
             document.body.appendChild(renderer.domElement);
 
-            // Lights
+            textureLoader = new THREE.TextureLoader();
+
             const hemiLight = new THREE.HemisphereLight(0xffffff, 0x444444, 0.8);
             scene.add(hemiLight);
 
             const dirLight = new THREE.DirectionalLight(0xffffff, 0.6);
             dirLight.position.set(20, 30, 10);
             dirLight.castShadow = true;
-            dirLight.shadow.mapSize.width = 2048;
-            dirLight.shadow.mapSize.height = 2048;
+            dirLight.shadow.mapSize.width = 1024; 
+            dirLight.shadow.mapSize.height = 1024;
             dirLight.shadow.camera.left = -50;
             dirLight.shadow.camera.right = 50;
             dirLight.shadow.camera.top = 50;
             dirLight.shadow.camera.bottom = -50;
             scene.add(dirLight);
 
-            // Build World
             buildWorld();
-            
-            // Add Groups
             scene.add(worldGroup);
             scene.add(playersGroup);
             scene.add(animalsGroup);
 
-            // Create My Character
             myMesh = createChibi(myCharType);
             myMesh.position.set(Math.random() * 4 - 2, 0, 15); 
             playersGroup.add(myMesh);
 
-            // Listeners
             window.addEventListener('resize', onWindowResize, false);
             setupControls();
 
-            // Start Loop
             clock = new THREE.Clock();
             animate();
 
-            // Start Networking
-            initNetwork();
-            initChat();
+            if(isConfigured) {
+                initNetwork();
+                initChat();
+            }
         }
 
         // ==========================================
         // PROCEDURAL ASSETS
         // ==========================================
-        
         function createChibi(type) {
             const group = new THREE.Group();
-            
-            // Inner group for bobbing animation (keeps root stable for camera)
             const model = new THREE.Group();
             group.add(model);
 
-            // Materials
             const skinMat = new THREE.MeshStandardMaterial({ color: 0xffe0bd, roughness: 0.5 });
             const clothesColor = type === 'michael' ? CONFIG.colors.michael : CONFIG.colors.douri;
             const clothMat = new THREE.MeshStandardMaterial({ color: clothesColor });
             const hairColor = type === 'michael' ? 0x2c3e50 : 0x8e44ad; 
             const hairMat = new THREE.MeshStandardMaterial({ color: hairColor });
 
-            // Body
-            const bodyGeo = new THREE.CylinderGeometry(0.3, 0.4, 0.8, 12);
-            const body = new THREE.Mesh(bodyGeo, clothMat);
-            body.position.y = 0.6;
-            body.castShadow = true;
-            model.add(body);
+            const body = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.4, 0.8, 12), clothMat);
+            body.position.y = 0.6; body.castShadow = true; model.add(body);
 
-            // Head
-            const headGeo = new THREE.SphereGeometry(0.45, 16, 16);
-            const head = new THREE.Mesh(headGeo, skinMat);
-            head.position.y = 1.2;
-            head.castShadow = true;
-            model.add(head);
+            const head = new THREE.Mesh(new THREE.SphereGeometry(0.45, 16, 16), skinMat);
+            head.position.y = 1.2; head.castShadow = true; model.add(head);
 
-            // Eyes
             const eyeGeo = new THREE.SphereGeometry(0.05, 8, 8);
             const eyeMat = new THREE.MeshBasicMaterial({ color: 0x000000 });
-            const leftEye = new THREE.Mesh(eyeGeo, eyeMat);
-            leftEye.position.set(-0.15, 1.25, 0.38);
-            model.add(leftEye);
-            const rightEye = new THREE.Mesh(eyeGeo, eyeMat);
-            rightEye.position.set(0.15, 1.25, 0.38);
-            model.add(rightEye);
+            const leftEye = new THREE.Mesh(eyeGeo, eyeMat); leftEye.position.set(-0.15, 1.25, 0.38); model.add(leftEye);
+            const rightEye = new THREE.Mesh(eyeGeo, eyeMat); rightEye.position.set(0.15, 1.25, 0.38); model.add(rightEye);
 
-            // Hair
             if (type === 'michael') {
-                const hairGeo = new THREE.SphereGeometry(0.48, 16, 16, 0, Math.PI * 2, 0, Math.PI/2);
-                const hair = new THREE.Mesh(hairGeo, hairMat);
-                hair.position.y = 1.25;
-                hair.rotation.x = -0.2;
-                model.add(hair);
+                const hair = new THREE.Mesh(new THREE.SphereGeometry(0.48, 16, 16, 0, Math.PI * 2, 0, Math.PI/2), hairMat);
+                hair.position.y = 1.25; hair.rotation.x = -0.2; model.add(hair);
             } else {
-                const hairGeo = new THREE.SphereGeometry(0.48, 16, 16, 0, Math.PI * 2, 0, Math.PI/1.8);
-                const hairTop = new THREE.Mesh(hairGeo, hairMat);
-                hairTop.position.y = 1.25;
-                model.add(hairTop);
-
-                const ponyGeo = new THREE.CylinderGeometry(0.1, 0.3, 0.8, 8);
-                const pony = new THREE.Mesh(ponyGeo, hairMat);
-                pony.position.set(0, 0.9, -0.4);
-                pony.rotation.x = 0.5;
-                model.add(pony);
+                const hairTop = new THREE.Mesh(new THREE.SphereGeometry(0.48, 16, 16, 0, Math.PI * 2, 0, Math.PI/1.8), hairMat);
+                hairTop.position.y = 1.25; model.add(hairTop);
+                const pony = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.3, 0.8, 8), hairMat);
+                pony.position.set(0, 0.9, -0.4); pony.rotation.x = 0.5; model.add(pony);
             }
 
-            // Arms
             const armGeo = new THREE.CylinderGeometry(0.08, 0.08, 0.5);
-            
-            const leftArmGroup = new THREE.Group();
-            leftArmGroup.position.set(-0.4, 0.9, 0);
-            const leftArm = new THREE.Mesh(armGeo, clothMat);
-            leftArm.position.y = -0.25;
-            leftArmGroup.add(leftArm);
-            model.add(leftArmGroup);
+            const leftArmGroup = new THREE.Group(); leftArmGroup.position.set(-0.4, 0.9, 0);
+            const leftArm = new THREE.Mesh(armGeo, clothMat); leftArm.position.y = -0.25; leftArmGroup.add(leftArm); model.add(leftArmGroup);
 
-            const rightArmGroup = new THREE.Group();
-            rightArmGroup.position.set(0.4, 0.9, 0);
-            const rightArm = new THREE.Mesh(armGeo, clothMat);
-            rightArm.position.y = -0.25;
-            rightArmGroup.add(rightArm);
-            model.add(rightArmGroup);
+            const rightArmGroup = new THREE.Group(); rightArmGroup.position.set(0.4, 0.9, 0);
+            const rightArm = new THREE.Mesh(armGeo, clothMat); rightArm.position.y = -0.25; rightArmGroup.add(rightArm); model.add(rightArmGroup);
 
-            // Legs
             const legGeo = new THREE.CylinderGeometry(0.1, 0.1, 0.5);
             const pantsMat = new THREE.MeshStandardMaterial({color: 0x333333});
-            
-            const leftLegGroup = new THREE.Group();
-            leftLegGroup.position.set(-0.2, 0.5, 0);
-            const leftLeg = new THREE.Mesh(legGeo, pantsMat);
-            leftLeg.position.y = -0.25;
-            leftLegGroup.add(leftLeg);
-            model.add(leftLegGroup);
+            const leftLegGroup = new THREE.Group(); leftLegGroup.position.set(-0.2, 0.5, 0);
+            const leftLeg = new THREE.Mesh(legGeo, pantsMat); leftLeg.position.y = -0.25; leftLegGroup.add(leftLeg); model.add(leftLegGroup);
 
-            const rightLegGroup = new THREE.Group();
-            rightLegGroup.position.set(0.2, 0.5, 0);
-            const rightLeg = new THREE.Mesh(legGeo, pantsMat);
-            rightLeg.position.y = -0.25;
-            rightLegGroup.add(rightLeg);
-            model.add(rightLegGroup);
+            const rightLegGroup = new THREE.Group(); rightLegGroup.position.set(0.2, 0.5, 0);
+            const rightLeg = new THREE.Mesh(legGeo, pantsMat); rightLeg.position.y = -0.25; rightLegGroup.add(rightLeg); model.add(rightLegGroup);
 
-            // Store references
-            group.userData = {
-                model: model, // We animate this instead of group position
-                leftArm: leftArmGroup,
-                rightArm: rightArmGroup,
-                leftLeg: leftLegGroup,
-                rightLeg: rightLegGroup,
-                head: head,
-                type: type,
-                walkTime: 0
-            };
-
+            group.userData = { model, leftArm: leftArmGroup, rightArm: rightArmGroup, leftLeg: leftLegGroup, rightLeg: rightLegGroup, head, type, walkTime: 0 };
             return group;
+        }
+
+        function createFloatingPhoto(x, z, url) {
+            const frameGroup = new THREE.Group(); frameGroup.position.set(x, 2.5, z); 
+            const frame = new THREE.Mesh(new THREE.BoxGeometry(2.2, 2.6, 0.1), new THREE.MeshStandardMaterial({ color: 0xffffff }));
+            frameGroup.add(frame);
+
+            const photoMat = new THREE.MeshBasicMaterial({ color: 0xeeeeee, side: THREE.DoubleSide });
+            if (url && textureLoader) {
+                textureLoader.load(url, (tex) => { photoMat.map = tex; photoMat.color.setHex(0xffffff); photoMat.needsUpdate = true; }, undefined, () => photoMat.color.setHex(0xffb7b2));
+            }
+            const photo = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), photoMat);
+            photo.position.z = 0.06; photo.position.y = 0.1; frameGroup.add(photo);
+            frameGroup.userData = { isPhoto: true, baseY: 2.5, phase: Math.random() * Math.PI };
+            return frameGroup;
         }
 
         function createRabbit() {
             const rabbit = new THREE.Group();
-            
             const mat = new THREE.MeshStandardMaterial({color: 0xffffff});
-            const body = new THREE.Mesh(new THREE.SphereGeometry(0.3, 8, 8), mat);
-            body.scale.set(1, 0.8, 1.2);
-            body.position.y = 0.3;
-            rabbit.add(body);
-            
-            const head = new THREE.Mesh(new THREE.SphereGeometry(0.2, 8, 8), mat);
-            head.position.set(0, 0.5, 0.3);
-            rabbit.add(head);
-            
+            const body = new THREE.Mesh(new THREE.SphereGeometry(0.3, 8, 8), mat); body.scale.set(1, 0.8, 1.2); body.position.y = 0.3; rabbit.add(body);
+            const head = new THREE.Mesh(new THREE.SphereGeometry(0.2, 8, 8), mat); head.position.set(0, 0.5, 0.3); rabbit.add(head);
             const earGeo = new THREE.CylinderGeometry(0.05, 0.05, 0.3);
-            const ear1 = new THREE.Mesh(earGeo, mat);
-            ear1.position.set(-0.1, 0.7, 0.3);
-            rabbit.add(ear1);
-            const ear2 = new THREE.Mesh(earGeo, mat);
-            ear2.position.set(0.1, 0.7, 0.3);
-            rabbit.add(ear2);
+            const ear1 = new THREE.Mesh(earGeo, mat); ear1.position.set(-0.1, 0.7, 0.3); rabbit.add(ear1);
+            const ear2 = new THREE.Mesh(earGeo, mat); ear2.position.set(0.1, 0.7, 0.3); rabbit.add(ear2);
 
-            // Random start
-            const angle = Math.random() * Math.PI * 2;
-            const dist = Math.random() * (CONFIG.worldRadius - 5);
-            rabbit.position.set(Math.cos(angle)*dist, 0, Math.sin(angle)*dist);
-            rabbit.rotation.y = Math.random() * Math.PI * 2;
-            
-            rabbit.userData = {
-                hopTime: Math.random() * 10,
-                speed: 0.5 + Math.random() * 0.5
-            };
-
+            const angle = Math.random() * Math.PI * 2; const dist = Math.random() * (CONFIG.worldRadius - 5);
+            rabbit.position.set(Math.cos(angle)*dist, 0, Math.sin(angle)*dist); rabbit.rotation.y = Math.random() * Math.PI * 2;
+            rabbit.userData = { hopTime: Math.random() * 10, speed: 0.5 + Math.random() * 0.5 };
             return rabbit;
         }
 
         function buildWorld() {
-            // Island
-            const islandGeo = new THREE.CylinderGeometry(CONFIG.worldRadius, CONFIG.worldRadius - 8, 5, 48);
-            const islandMat = new THREE.MeshStandardMaterial({ color: CONFIG.colors.grass, flatShading: true });
-            const island = new THREE.Mesh(islandGeo, islandMat);
-            island.position.y = -2.5;
-            island.receiveShadow = true;
-            worldGroup.add(island);
+            const island = new THREE.Mesh(new THREE.CylinderGeometry(CONFIG.worldRadius, CONFIG.worldRadius - 8, 5, 48), new THREE.MeshStandardMaterial({ color: CONFIG.colors.grass, flatShading: true }));
+            island.position.y = -2.5; island.receiveShadow = true; worldGroup.add(island);
 
-            // Clouds Ring
-            const cloudGeo = new THREE.TorusGeometry(CONFIG.worldRadius + 5, 6, 16, 100);
-            const cloudMat = new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.3 });
-            const clouds = new THREE.Mesh(cloudGeo, cloudMat);
-            clouds.rotation.x = Math.PI / 2;
-            clouds.position.y = -5;
-            worldGroup.add(clouds);
+            const clouds = new THREE.Mesh(new THREE.TorusGeometry(CONFIG.worldRadius + 5, 6, 16, 100), new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.3 }));
+            clouds.rotation.x = Math.PI / 2; clouds.position.y = -5; worldGroup.add(clouds);
 
-            // Memories
             CONFIG.memories.forEach(mem => {
-                const markerGeo = new THREE.TorusGeometry(0.5, 0.05, 8, 16);
-                const markerMat = new THREE.MeshBasicMaterial({ color: 0xffff00 });
-                const marker = new THREE.Mesh(markerGeo, markerMat);
-                marker.position.set(mem.x, 0.5, mem.z);
-                marker.userData = { baseY: 0.5, id: mem.id, isFinal: mem.isFinal };
-                worldGroup.add(marker);
-                
+                const marker = new THREE.Mesh(new THREE.TorusGeometry(0.5, 0.05, 8, 16), new THREE.MeshBasicMaterial({ color: 0xffff00 }));
+                marker.position.set(mem.x, 0.5, mem.z); marker.userData = { baseY: 0.5, id: mem.id, isFinal: mem.isFinal }; worldGroup.add(marker);
+                if (mem.image && mem.image.trim() !== "") worldGroup.add(createFloatingPhoto(mem.x, mem.z, mem.image));
                 if(mem.isFinal) {
-                    const finalGeo = new THREE.CylinderGeometry(3, 3, 0.1, 32);
-                    const finalMat = new THREE.MeshBasicMaterial({ color: 0xff6b6b, transparent: true, opacity: 0.5 });
-                    const finalZone = new THREE.Mesh(finalGeo, finalMat);
-                    finalZone.position.set(mem.x, 0.05, mem.z);
-                    worldGroup.add(finalZone);
+                    const finalZone = new THREE.Mesh(new THREE.CylinderGeometry(3, 3, 0.1, 32), new THREE.MeshBasicMaterial({ color: 0xff6b6b, transparent: true, opacity: 0.5 }));
+                    finalZone.position.set(mem.x, 0.05, mem.z); worldGroup.add(finalZone);
                 }
             });
 
-            // Trees (More of them)
             for(let i=0; i<30; i++) {
-                const x = (Math.random() - 0.5) * (CONFIG.worldRadius * 1.8);
-                const z = (Math.random() - 0.5) * (CONFIG.worldRadius * 1.8);
-                if(Math.sqrt(x*x + z*z) > CONFIG.worldRadius - 2) continue;
-                if(Math.sqrt(x*x + z*z) < 5) continue; 
-
-                const treeGroup = new THREE.Group();
-                treeGroup.position.set(x, 0, z);
-                
-                // Random scale
-                const scale = 0.8 + Math.random() * 0.5;
-                treeGroup.scale.setScalar(scale);
-
+                const x = (Math.random() - 0.5) * (CONFIG.worldRadius * 1.8); const z = (Math.random() - 0.5) * (CONFIG.worldRadius * 1.8);
+                if(Math.sqrt(x*x + z*z) > CONFIG.worldRadius - 2) continue; if(Math.sqrt(x*x + z*z) < 5) continue; 
+                const treeGroup = new THREE.Group(); treeGroup.position.set(x, 0, z); treeGroup.scale.setScalar(0.8 + Math.random() * 0.5);
                 const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.3, 2, 6), new THREE.MeshStandardMaterial({ color: 0x8B4513 }));
-                trunk.position.y = 1;
-                trunk.castShadow = true;
-                treeGroup.add(trunk);
-
+                trunk.position.y = 1; trunk.castShadow = true; treeGroup.add(trunk);
                 const leaves = new THREE.Mesh(new THREE.SphereGeometry(1.2, 8, 8), new THREE.MeshStandardMaterial({ color: 0xffaebc, flatShading: true }));
-                leaves.position.y = 2.5;
-                leaves.castShadow = true;
-                treeGroup.add(leaves);
-
-                // Add to list for animation
-                treeGroup.userData = { isTree: true, phase: Math.random() * Math.PI };
-                
-                worldGroup.add(treeGroup);
+                leaves.position.y = 2.5; leaves.castShadow = true; treeGroup.add(leaves);
+                treeGroup.userData = { isTree: true, phase: Math.random() * Math.PI }; worldGroup.add(treeGroup);
             }
 
-            // Animals
-            for(let i=0; i<8; i++) {
-                const rabbit = createRabbit();
-                animalsGroup.add(rabbit);
-            }
+            for(let i=0; i<8; i++) animalsGroup.add(createRabbit());
         }
-
-        // ==========================================
-        // GAME LOGIC
-        // ==========================================
 
         function animate() {
             requestAnimationFrame(animate);
-            
-            const delta = clock.getDelta();
-            const time = clock.getElapsedTime();
-
-            // 1. Player Movement (Relative to Camera)
+            const delta = clock.getDelta(); const time = clock.getElapsedTime();
             let speed = 0;
             if (myMesh) {
                 const moveSpeed = 6 * delta;
-
                 if (input.y !== 0 || input.x !== 0) {
                     speed = 1;
-                    
-                    // Calculate move direction relative to camera angle
-                    // Input x/y are from joystick (Screen space: Up is -Y in 2D, but let's map:
-                    // Up (input.y=1) -> Move away from camera
-                    // Right (input.x=1) -> Move right of camera
-                    
-                    const camDir = camAngleH; // The angle the camera is looking from (roughly)
-                    // Actually camAngleH is where camera IS. Camera looks at center.
-                    // If cam is at Angle 0 (Positive Z), it looks towards -Z.
-                    
-                    // Let's compute angle from inputs
-                    // Input Angle 0 = Up. 
                     const inputAngle = Math.atan2(input.x, input.y); 
-                    
-                    // We want to move relative to camera.
-                    // If camera is at 0 rads (back), Up moves Forward (PI).
-                    // This creates a standard 3rd person feel.
                     const targetRotation = camAngleH + inputAngle + Math.PI; 
-
-                    // Smooth rotation
                     let rotDiff = targetRotation - myMesh.rotation.y;
-                    while (rotDiff > Math.PI) rotDiff -= Math.PI * 2;
-                    while (rotDiff < -Math.PI) rotDiff += Math.PI * 2;
+                    while (rotDiff > Math.PI) rotDiff -= Math.PI * 2; while (rotDiff < -Math.PI) rotDiff += Math.PI * 2;
                     myMesh.rotation.y += rotDiff * 0.15;
-
-                    // Move forward
-                    myMesh.position.x += Math.sin(myMesh.rotation.y) * moveSpeed;
-                    myMesh.position.z += Math.cos(myMesh.rotation.y) * moveSpeed;
+                    myMesh.position.x += Math.sin(myMesh.rotation.y) * moveSpeed; myMesh.position.z += Math.cos(myMesh.rotation.y) * moveSpeed;
                 }
-
-                // Boundary check
                 const dist = Math.sqrt(myMesh.position.x**2 + myMesh.position.z**2);
                 if (dist > CONFIG.worldRadius - 1) {
                     const angle = Math.atan2(myMesh.position.z, myMesh.position.x);
-                    myMesh.position.x = Math.cos(angle) * (CONFIG.worldRadius - 1);
-                    myMesh.position.z = Math.sin(angle) * (CONFIG.worldRadius - 1);
+                    myMesh.position.x = Math.cos(angle) * (CONFIG.worldRadius - 1); myMesh.position.z = Math.sin(angle) * (CONFIG.worldRadius - 1);
                 }
-
                 animateCharacter(myMesh, speed, time);
-                
-                // Sync
-                if (Date.now() - lastUpdate > 100) {
-                    sendUpdate(speed > 0);
-                    lastUpdate = Date.now();
-                }
-
+                if (Date.now() - lastUpdate > 100) { sendUpdate(speed > 0); lastUpdate = Date.now(); }
                 checkTriggers();
             }
 
-            // 2. Camera Orbit Logic
             if (myMesh) {
-                // Calculate camera position based on spherical coords
-                // x = r * sin(theta) * cos(phi)
-                // y = r * sin(phi)
-                // z = r * cos(theta) * cos(phi)
-                
-                // Constraints
                 camAngleV = Math.max(0.1, Math.min(Math.PI / 2.2, camAngleV));
-                
                 const offsetX = camDist * Math.sin(camAngleH) * Math.cos(camAngleV);
                 const offsetY = camDist * Math.sin(camAngleV);
                 const offsetZ = camDist * Math.cos(camAngleH) * Math.cos(camAngleV);
-
-                const targetPos = new THREE.Vector3(
-                    myMesh.position.x + offsetX,
-                    myMesh.position.y + offsetY,
-                    myMesh.position.z + offsetZ
-                );
-
-                camera.position.lerp(targetPos, 0.1);
+                camera.position.lerp(new THREE.Vector3(myMesh.position.x + offsetX, myMesh.position.y + offsetY, myMesh.position.z + offsetZ), 0.1);
                 camera.lookAt(myMesh.position.x, myMesh.position.y + 1, myMesh.position.z);
             }
 
-            // 3. Other Players
             Object.values(otherPlayers).forEach(p => {
                 p.mesh.position.lerp(p.targetPos, 0.1);
                 let dRot = p.targetRot - p.mesh.rotation.y;
-                while (dRot > Math.PI) dRot -= Math.PI * 2;
-                while (dRot < -Math.PI) dRot += Math.PI * 2;
+                while (dRot > Math.PI) dRot -= Math.PI * 2; while (dRot < -Math.PI) dRot += Math.PI * 2;
                 p.mesh.rotation.y += dRot * 0.1;
                 animateCharacter(p.mesh, p.isMoving ? 1 : 0, time);
             });
 
-            // 4. World Animation (Trees & Particles)
             worldGroup.children.forEach(child => {
-                if(child.userData.id) {
-                    child.rotation.y += delta;
-                    child.position.y = child.userData.baseY + Math.sin(time * 2) * 0.1;
-                }
-                // Trees swaying
-                if(child.userData.isTree) {
-                    child.rotation.z = Math.sin(time + child.userData.phase) * 0.05;
-                }
+                if(child.userData.id) { child.rotation.y += delta; child.position.y = child.userData.baseY + Math.sin(time * 2) * 0.1; }
+                if (child.userData.isPhoto) { child.position.y = child.userData.baseY + Math.sin(time + child.userData.phase) * 0.2; child.rotation.y = Math.sin(time * 0.5 + child.userData.phase) * 0.3; }
+                if(child.userData.isTree) { child.rotation.z = Math.sin(time + child.userData.phase) * 0.05; }
             });
 
-            // 5. Animals Animation
             animalsGroup.children.forEach(rabbit => {
-                rabbit.userData.hopTime += delta;
-                const ht = rabbit.userData.hopTime;
-                
-                // Hop logic: Move forward and jump up periodically
-                if (ht % 3 < 1) {
-                    // Resting
-                    rabbit.position.y = 0;
-                } else {
-                    // Hopping
-                    rabbit.position.y = Math.abs(Math.sin(ht * 5)) * 0.5;
-                    rabbit.translateZ(delta * rabbit.userData.speed);
-                    
-                    // Turn randomly
-                    if (Math.random() < 0.05) {
-                        rabbit.rotation.y += (Math.random() - 0.5) * 2;
-                    }
-                    
-                    // Boundary
-                    if(rabbit.position.length() > CONFIG.worldRadius - 2) {
-                        rabbit.lookAt(0,0,0);
-                    }
+                rabbit.userData.hopTime += delta; const ht = rabbit.userData.hopTime;
+                if (ht % 3 < 1) { rabbit.position.y = 0; }
+                else {
+                    rabbit.position.y = Math.abs(Math.sin(ht * 5)) * 0.5; rabbit.translateZ(delta * rabbit.userData.speed);
+                    if (Math.random() < 0.05) rabbit.rotation.y += (Math.random() - 0.5) * 2;
+                    if(rabbit.position.length() > CONFIG.worldRadius - 2) rabbit.lookAt(0,0,0);
                 }
             });
 
@@ -829,40 +496,22 @@
         }
 
         function animateCharacter(mesh, speed, time) {
-            const data = mesh.userData;
-            if(!data.leftLeg) return;
-            const model = data.model;
-
+            const data = mesh.userData; if(!data.leftLeg) return; const model = data.model;
             if (speed > 0) {
                 data.walkTime += 0.2;
-                data.leftLeg.rotation.x = Math.sin(data.walkTime) * 0.5;
-                data.rightLeg.rotation.x = Math.sin(data.walkTime + Math.PI) * 0.5;
-                data.leftArm.rotation.x = Math.sin(data.walkTime + Math.PI) * 0.5;
-                data.rightArm.rotation.x = Math.sin(data.walkTime) * 0.5;
-                
-                // Bobbing - ANIMATE MODEL, NOT MESH GROUP to fix vibration
+                data.leftLeg.rotation.x = Math.sin(data.walkTime) * 0.5; data.rightLeg.rotation.x = Math.sin(data.walkTime + Math.PI) * 0.5;
+                data.leftArm.rotation.x = Math.sin(data.walkTime + Math.PI) * 0.5; data.rightArm.rotation.x = Math.sin(data.walkTime) * 0.5;
                 model.position.y = Math.abs(Math.sin(data.walkTime*2)) * 0.1;
             } else {
-                data.leftLeg.rotation.x = THREE.MathUtils.lerp(data.leftLeg.rotation.x, 0, 0.1);
-                data.rightLeg.rotation.x = THREE.MathUtils.lerp(data.rightLeg.rotation.x, 0, 0.1);
-                data.leftArm.rotation.x = THREE.MathUtils.lerp(data.leftArm.rotation.x, 0, 0.1);
-                data.rightArm.rotation.x = THREE.MathUtils.lerp(data.rightArm.rotation.x, 0, 0.1);
-                
-                model.position.y = THREE.MathUtils.lerp(model.position.y, 0, 0.1);
-                data.head.rotation.y = Math.sin(time * 0.5) * 0.1;
+                data.leftLeg.rotation.x = THREE.MathUtils.lerp(data.leftLeg.rotation.x, 0, 0.1); data.rightLeg.rotation.x = THREE.MathUtils.lerp(data.rightLeg.rotation.x, 0, 0.1);
+                data.leftArm.rotation.x = THREE.MathUtils.lerp(data.leftArm.rotation.x, 0, 0.1); data.rightArm.rotation.x = THREE.MathUtils.lerp(data.rightArm.rotation.x, 0, 0.1);
+                model.position.y = THREE.MathUtils.lerp(model.position.y, 0, 0.1); data.head.rotation.y = Math.sin(time * 0.5) * 0.1;
             }
         }
 
-        // ==========================================
-        // TRIGGERS, CHAT & PARTICLES (Shortened)
-        // ==========================================
-        
-        let activePanel = null;
-        let finalEventTriggered = false;
-
+        let activePanel = null; let finalEventTriggered = false;
         function checkTriggers() {
-            if(!myMesh) return;
-            let nearMemory = false;
+            if(!myMesh) return; let nearMemory = false;
             CONFIG.memories.forEach(mem => {
                 const dist = Math.sqrt((myMesh.position.x-mem.x)**2 + (myMesh.position.z-mem.z)**2);
                 if (dist < 3) {
@@ -873,304 +522,140 @@
             });
             if (!nearMemory && activePanel !== null && !finalEventTriggered) { closePanel(); activePanel = null; }
         }
-
-        function showPanel(title, text) {
-            const panel = document.getElementById('interaction-panel');
-            document.getElementById('panel-title').innerText = title;
-            document.getElementById('panel-text').innerText = text;
-            panel.style.display = 'block';
-        }
-
+        function showPanel(title, text) { document.getElementById('panel-title').innerText = title; document.getElementById('panel-text').innerText = text; document.getElementById('interaction-panel').style.display = 'block'; }
         function closePanel() { document.getElementById('interaction-panel').style.display = 'none'; }
 
         function checkFinalEvent() {
             if (Object.keys(otherPlayers).length === 0) return;
             const otherP = Object.values(otherPlayers)[0];
-            const dist = otherP.mesh.position.length();
-            const myDist = myMesh.position.length();
-            if (dist < 4 && myDist < 4 && !finalEventTriggered) { triggerFinalEvent(); }
+            if (otherP.mesh.position.length() < 4 && myMesh.position.length() < 4 && !finalEventTriggered) { triggerFinalEvent(); }
         }
 
         function triggerFinalEvent() {
             finalEventTriggered = true;
             const msg = document.getElementById('floating-message');
             msg.innerHTML = `Happy 400 Days, my Douri ❤️<br><span style="font-size:1rem; font-weight:normal">From your Michael</span>`;
-            msg.style.opacity = 1;
-            scene.fog.color.setHex(0x220022);
-            scene.background.setHex(0x110011);
-            for(let i=0; i<100; i++) {
-                spawnParticle(0, 2, 0, 0xff6b6b, true);
-                spawnParticle(0, 2, 0, 0xffd700, true);
-            }
+            msg.style.opacity = 1; scene.fog.color.setHex(0x220022); scene.background.setHex(0x110011);
+            for(let i=0; i<100; i++) { spawnParticle(0, 2, 0, 0xff6b6b, true); spawnParticle(0, 2, 0, 0xffd700, true); }
         }
 
         const particles = [];
         function spawnParticle(x, y, z, color, isExplosion = false) {
             const mesh = new THREE.Mesh(new THREE.PlaneGeometry(0.3, 0.3), new THREE.MeshBasicMaterial({ color: color, side: THREE.DoubleSide }));
-            mesh.position.set(x, y, z);
-            mesh.rotation.set(Math.random()*Math.PI, Math.random()*Math.PI, 0);
-            scene.add(mesh);
+            mesh.position.set(x, y, z); mesh.rotation.set(Math.random()*Math.PI, Math.random()*Math.PI, 0); scene.add(mesh);
             particles.push({ mesh, velocity: new THREE.Vector3((Math.random()-0.5)*(isExplosion?0.5:0.1), (Math.random()-0.5)*(isExplosion?0.5:0.1)+0.1, (Math.random()-0.5)*(isExplosion?0.5:0.1)), life: 1.0 });
         }
-
         function updateParticles(delta) {
             for (let i = particles.length - 1; i >= 0; i--) {
-                const p = particles[i];
-                p.life -= delta * 0.5;
-                p.mesh.position.add(p.velocity);
-                p.mesh.rotation.z += delta;
-                p.mesh.scale.setScalar(p.life);
+                const p = particles[i]; p.life -= delta * 0.5; p.mesh.position.add(p.velocity); p.mesh.rotation.z += delta; p.mesh.scale.setScalar(p.life);
                 if (p.life <= 0) { scene.remove(p.mesh); particles.splice(i, 1); }
             }
         }
 
-        // ==========================================
-        // CONTROLS & INPUT
-        // ==========================================
-        
         function setupControls() {
-            // Mouse Drag for Camera
             document.addEventListener('mousedown', (e) => {
                 if (e.target.tagName !== 'CANVAS' && e.target.id !== 'ui-layer') return;
-                isDragging = true;
-                previousMouse = { x: e.clientX, y: e.clientY };
+                isDragging = true; previousMouse = { x: e.clientX, y: e.clientY };
             });
-            
             document.addEventListener('mouseup', () => isDragging = false);
-            
             document.addEventListener('mousemove', (e) => {
-                if (isDragging) {
-                    const deltaX = e.clientX - previousMouse.x;
-                    const deltaY = e.clientY - previousMouse.y;
-                    
-                    camAngleH -= deltaX * 0.005;
-                    camAngleV += deltaY * 0.005;
-                    
-                    previousMouse = { x: e.clientX, y: e.clientY };
-                }
+                if (isDragging) { camAngleH -= (e.clientX - previousMouse.x) * 0.005; camAngleV += (e.clientY - previousMouse.y) * 0.005; previousMouse = { x: e.clientX, y: e.clientY }; }
             });
-
-            // Keyboard
             document.addEventListener('keydown', (e) => {
                 if(document.activeElement === document.getElementById('chat-input')) return;
-                if (e.key === 'ArrowUp' || e.key === 'w') input.y = 1;
-                if (e.key === 'ArrowDown' || e.key === 's') input.y = -1;
-                if (e.key === 'ArrowLeft' || e.key === 'a') input.x = -1; // Note: Logic handled in animate
-                if (e.key === 'ArrowRight' || e.key === 'd') input.x = 1;
+                if (e.key === 'ArrowUp' || e.key === 'w') input.y = 1; if (e.key === 'ArrowDown' || e.key === 's') input.y = -1;
+                if (e.key === 'ArrowLeft' || e.key === 'a') input.x = 1; if (e.key === 'ArrowRight' || e.key === 'd') input.x = -1;
+            });
+            document.addEventListener('keyup', (e) => {
+                if (['w','s','ArrowUp','ArrowDown'].includes(e.key)) input.y = 0; if (['a','d','ArrowLeft','ArrowRight'].includes(e.key)) input.x = 0;
             });
             
-            document.addEventListener('keyup', (e) => {
-                if (['w','s','ArrowUp','ArrowDown'].includes(e.key)) input.y = 0;
-                if (['a','d','ArrowLeft','ArrowRight'].includes(e.key)) input.x = 0;
-            });
-
-            // Touch Joystick + Camera Pan
-            const zone = document.getElementById('joystick-zone');
-            const knob = document.getElementById('joystick-knob');
-            let startX, startY;
-
-            // Touch logic for entire screen
+            const zone = document.getElementById('joystick-zone'); const knob = document.getElementById('joystick-knob'); let startX, startY;
             document.addEventListener('touchstart', (e) => {
-                // Check if touch is inside Joystick Zone
                 const touch = e.touches[0];
-                const rect = zone.getBoundingClientRect();
-                
-                // If touch is in joystick area (bottom left usually)
-                if (touch.clientX < window.innerWidth * 0.4 && touch.clientY > window.innerHeight * 0.5) {
-                    startX = touch.clientX;
-                    startY = touch.clientY;
-                    // Move joystick center to touch start for better UX? Or static? 
-                    // Let's keep static but activate input
-                } else {
-                    // It's a camera drag
-                    isDragging = true;
-                    previousMouse = { x: touch.clientX, y: touch.clientY };
-                }
+                if (touch.clientX < window.innerWidth * 0.5 && touch.clientY > window.innerHeight * 0.5) {
+                    startX = touch.clientX; startY = touch.clientY; zone.style.left = (startX - 70) + 'px'; zone.style.bottom = 'auto'; zone.style.top = (startY - 70) + 'px'; zone.style.display = 'block';
+                } else { isDragging = true; previousMouse = { x: touch.clientX, y: touch.clientY }; }
             }, {passive: false});
-
             document.addEventListener('touchmove', (e) => {
-                e.preventDefault(); // Stop scroll
-                const touch = e.touches[0];
-
-                if (isDragging) {
-                    const deltaX = touch.clientX - previousMouse.x;
-                    const deltaY = touch.clientY - previousMouse.y;
-                    camAngleH -= deltaX * 0.008;
-                    camAngleV += deltaY * 0.008;
-                    previousMouse = { x: touch.clientX, y: touch.clientY };
-                } else if (startX) {
-                    // Joystick
-                    let dx = touch.clientX - startX;
-                    let dy = touch.clientY - startY;
-                    const maxDist = 35;
-                    const dist = Math.sqrt(dx*dx + dy*dy);
-                    if(dist > maxDist) { dx = (dx/dist)*maxDist; dy = (dy/dist)*maxDist; }
-                    knob.style.transform = `translate(${dx}px, ${dy}px)`;
-                    input.x = dx / maxDist; 
-                    input.y = -dy / maxDist; 
+                e.preventDefault(); const touch = e.touches[0];
+                if (isDragging) { camAngleH -= (touch.clientX - previousMouse.x) * 0.008; camAngleV += (touch.clientY - previousMouse.y) * 0.008; previousMouse = { x: touch.clientX, y: touch.clientY }; }
+                else if (startX) {
+                    let dx = touch.clientX - startX; let dy = touch.clientY - startY; const maxDist = 45;
+                    const dist = Math.sqrt(dx*dx + dy*dy); if(dist > maxDist) { dx = (dx/dist)*maxDist; dy = (dy/dist)*maxDist; }
+                    knob.style.transform = `translate(${dx}px, ${dy}px)`; input.x = dx / maxDist; input.y = -dy / maxDist; 
                 }
             }, {passive: false});
-
             document.addEventListener('touchend', (e) => {
                 isDragging = false;
-                startX = null;
-                knob.style.transform = `translate(0px, 0px)`;
-                input.x = 0;
-                input.y = 0;
+                if(startX) { startX = null; knob.style.transform = `translate(0px, 0px)`; zone.style.left = '30px'; zone.style.top = 'auto'; zone.style.bottom = '40px'; input.x = 0; input.y = 0; }
             });
         }
+        function resetCamera() { camAngleH = 0; camAngleV = 0.5; }
 
-        function resetCamera() {
-            camAngleH = 0;
-            camAngleV = 0.5;
-        }
-
-        // ==========================================
-        // NETWORK LOGIC & CHAT
-        // ==========================================
-
-        async function initNetwork() {
+        function initNetwork() {
+            if(!db) return;
             const roomRef = db.collection('artifacts').doc(appId).collection('public').doc('data').collection('mdworld_rooms').doc(roomId).collection('players');
             unsubscribeRoom = roomRef.onSnapshot(snapshot => {
                 snapshot.docChanges().forEach(change => {
-                    const data = change.doc.data();
-                    const pid = change.doc.id;
+                    const data = change.doc.data(); const pid = change.doc.id;
                     if (pid === myUser.uid) return;
-
-                    if (change.type === 'added') {
-                        const mesh = createChibi(data.type);
-                        scene.add(mesh);
-                        otherPlayers[pid] = { mesh, targetPos: new THREE.Vector3(data.x, data.y, data.z), targetRot: data.rot, isMoving: false };
-                    }
-                    if (change.type === 'modified') {
-                        if (otherPlayers[pid]) {
-                            const op = otherPlayers[pid];
-                            op.targetPos.set(data.x, data.y, data.z);
-                            op.targetRot = data.rot;
-                            op.isMoving = data.moving;
-                            if (data.emote) handleEmote(op.mesh, data.emote);
-                        }
-                    }
-                    if (change.type === 'removed' && otherPlayers[pid]) {
-                        scene.remove(otherPlayers[pid].mesh);
-                        delete otherPlayers[pid];
-                    }
+                    if (change.type === 'added') { const mesh = createChibi(data.type); scene.add(mesh); otherPlayers[pid] = { mesh, targetPos: new THREE.Vector3(data.x, data.y, data.z), targetRot: data.rot, isMoving: false }; }
+                    if (change.type === 'modified' && otherPlayers[pid]) { const op = otherPlayers[pid]; op.targetPos.set(data.x, data.y, data.z); op.targetRot = data.rot; op.isMoving = data.moving; if (data.emote) handleEmote(op.mesh, data.emote); }
+                    if (change.type === 'removed' && otherPlayers[pid]) { scene.remove(otherPlayers[pid].mesh); delete otherPlayers[pid]; }
                 });
             });
         }
 
         function initChat() {
+            if(!db) return;
             const chatRef = db.collection('artifacts').doc(appId).collection('public').doc('data').collection('mdworld_rooms').doc(roomId).collection('chat').orderBy('timestamp', 'desc').limit(15);
-            
             unsubscribeChat = chatRef.onSnapshot(snapshot => {
-                const chatBox = document.getElementById('chat-messages');
-                chatBox.innerHTML = '';
-                const msgs = [];
-                snapshot.forEach(doc => msgs.push(doc.data()));
+                const chatBox = document.getElementById('chat-messages'); chatBox.innerHTML = '';
+                const msgs = []; snapshot.forEach(doc => msgs.push(doc.data()));
                 msgs.reverse().forEach(data => {
-                    const div = document.createElement('div');
-                    div.className = 'chat-msg';
-                    div.innerHTML = `<span class="chat-name">${data.name}:</span> ${data.text}`;
-                    chatBox.appendChild(div);
-                });
-                chatBox.scrollTop = chatBox.scrollHeight;
+                    const div = document.createElement('div'); div.className = 'chat-msg'; div.innerHTML = `<span class="chat-name">${data.name}:</span> ${data.text}`; chatBox.appendChild(div);
+                }); chatBox.scrollTop = chatBox.scrollHeight;
             });
-
             document.getElementById('chat-send').addEventListener('click', sendChat);
             document.getElementById('chat-input').addEventListener('keypress', (e) => { if(e.key === 'Enter') sendChat(); });
         }
 
         function sendChat() {
-            const input = document.getElementById('chat-input');
-            const text = input.value.trim();
-            if(!text || !myUser) return;
-            
-            db.collection('artifacts').doc(appId).collection('public').doc('data').collection('mdworld_rooms').doc(roomId).collection('chat').add({
-                name: myCharType === 'michael' ? 'Michael' : 'Douri',
-                text: text,
-                timestamp: firebase.firestore.FieldValue.serverTimestamp()
-            });
+            if(!db) return; const input = document.getElementById('chat-input'); const text = input.value.trim(); if(!text || !myUser) return;
+            db.collection('artifacts').doc(appId).collection('public').doc('data').collection('mdworld_rooms').doc(roomId).collection('chat').add({ name: myCharType === 'michael' ? 'Michael' : 'Douri', text: text, timestamp: firebase.firestore.FieldValue.serverTimestamp() });
             input.value = '';
         }
 
         function sendUpdate(isMoving) {
-            if(!myUser || !myMesh) return;
-            db.collection('artifacts').doc(appId).collection('public').doc('data').collection('mdworld_rooms').doc(roomId).collection('players').doc(myUser.uid).set({
-                x: myMesh.position.x, y: myMesh.position.y, z: myMesh.position.z, rot: myMesh.rotation.y,
-                type: myCharType, moving: isMoving, timestamp: firebase.firestore.FieldValue.serverTimestamp()
-            }, { merge: true });
+            if(!myUser || !myMesh || !db) return;
+            db.collection('artifacts').doc(appId).collection('public').doc('data').collection('mdworld_rooms').doc(roomId).collection('players').doc(myUser.uid).set({ x: myMesh.position.x, y: myMesh.position.y, z: myMesh.position.z, rot: myMesh.rotation.y, type: myCharType, moving: isMoving, timestamp: firebase.firestore.FieldValue.serverTimestamp() }, { merge: true });
         }
 
         function sendEmote(emoteName) {
-            if(!myUser) return;
-            handleEmote(myMesh, emoteName);
-            db.collection('artifacts').doc(appId).collection('public').doc('data').collection('mdworld_rooms').doc(roomId).collection('players').doc(myUser.uid).set({
-                emote: { name: emoteName, time: Date.now() }
-            }, { merge: true });
+            if(!myUser || !db) return; handleEmote(myMesh, emoteName);
+            db.collection('artifacts').doc(appId).collection('public').doc('data').collection('mdworld_rooms').doc(roomId).collection('players').doc(myUser.uid).set({ emote: { name: emoteName, time: Date.now() } }, { merge: true });
         }
 
-        let lastEmoteTime = {};
         function handleEmote(mesh, emoteData) {
-            if (emoteData.time && lastEmoteTime[mesh.uuid] === emoteData.time) return;
-            lastEmoteTime[mesh.uuid] = emoteData.time;
-            const name = emoteData.name;
-
-            if (name === 'heart') {
-                for(let i=0; i<5; i++) setTimeout(() => spawnParticle(mesh.position.x, mesh.position.y + 2, mesh.position.z, 0xff6b6b), i * 100);
-            } else if (name === 'wave') {
-                const arm = mesh.userData.rightArm;
-                let t = 0;
-                const int = setInterval(() => { t += 0.2; arm.rotation.z = Math.sin(t*10)*2.5; if(t>3) { clearInterval(int); arm.rotation.z=0; } }, 16);
-            } else if (name === 'dance') {
-                let t = 0;
-                const int = setInterval(() => { t += 0.1; mesh.userData.model.rotation.y += 0.5; mesh.userData.model.position.y = Math.abs(Math.sin(t*5))*0.5; if(t>4) clearInterval(int); }, 16);
-            }
+            if (emoteData.time && lastEmoteTime[mesh.uuid] === emoteData.time) return; lastEmoteTime[mesh.uuid] = emoteData.time; const name = emoteData.name;
+            if (name === 'heart') { for(let i=0; i<5; i++) setTimeout(() => spawnParticle(mesh.position.x, mesh.position.y + 2, mesh.position.z, 0xff6b6b), i * 100); }
+            else if (name === 'wave') { const arm = mesh.userData.rightArm; let t = 0; const int = setInterval(() => { t += 0.2; arm.rotation.z = Math.sin(t*10)*2.5; if(t>3) { clearInterval(int); arm.rotation.z=0; } }, 16); }
+            else if (name === 'dance') { let t = 0; const int = setInterval(() => { t += 0.1; mesh.userData.model.rotation.y += 0.5; mesh.userData.model.position.y = Math.abs(Math.sin(t*5))*0.5; if(t>4) clearInterval(int); }, 16); }
         }
-
-        // ==========================================
-        // UI FLOW
-        // ==========================================
 
         document.getElementById('btn-enter').addEventListener('click', async () => {
-            const btn = document.getElementById('btn-enter');
-            const status = document.getElementById('status-msg');
-            const codeInput = document.getElementById('room-code').value.toUpperCase();
-            
+            const btn = document.getElementById('btn-enter'); const status = document.getElementById('status-msg'); const codeInput = document.getElementById('room-code').value.toUpperCase();
+            if (!isConfigured) { status.innerText = "Error: Firebase keys missing. Edit index.html!"; alert("You must edit index.html and paste your Firebase Configuration keys."); return; }
             if(!codeInput) { status.innerText = "Please enter a Room Code!"; return; }
-
-            btn.disabled = true;
-            status.innerText = "Connecting...";
-            myCharType = document.getElementById('char-select').value;
-            roomId = codeInput;
-
+            btn.disabled = true; status.innerText = "Connecting..."; myCharType = document.getElementById('char-select').value; roomId = codeInput;
             try {
-                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-                    await auth.signInWithCustomToken(__initial_auth_token);
-                } else {
-                    await auth.signInAnonymously();
-                }
-                auth.onAuthStateChanged((user) => {
-                    if (user) {
-                        myUser = user;
-                        document.getElementById('login-screen').classList.add('hidden');
-                        document.getElementById('game-ui').classList.remove('hidden');
-                        initGame();
-                    }
-                });
-            } catch (err) {
-                console.error(err);
-                status.innerText = "Connection failed. Refresh.";
-                btn.disabled = false;
-            }
+                await auth.signInAnonymously();
+                auth.onAuthStateChanged((user) => { if (user) { myUser = user; document.getElementById('login-screen').classList.add('hidden'); document.getElementById('game-ui').classList.remove('hidden'); initGame(); } });
+            } catch (err) { console.error(err); status.innerText = "Connection failed. Check console."; btn.disabled = false; }
         });
 
-        function onWindowResize() {
-            if(camera && renderer) {
-                camera.aspect = window.innerWidth / window.innerHeight;
-                camera.updateProjectionMatrix();
-                renderer.setSize(window.innerWidth, window.innerHeight);
-            }
-        }
+        function onWindowResize() { if(camera && renderer) { camera.aspect = window.innerWidth / window.innerHeight; camera.updateProjectionMatrix(); renderer.setSize(window.innerWidth, window.innerHeight); } }
     </script>
 </body>
 </html>
