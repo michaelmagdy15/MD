@@ -214,7 +214,7 @@
         // FIREBASE SETUP - STANDALONE
         // ==========================================
         
-        // YOUR CONFIGURATION (Fixed)
+        // YOUR CONFIGURATION (Integrated)
         const firebaseConfig = {
             apiKey: "AIzaSyCK7b_WlKXv4Kkh6V90UeL9lHjTeKehSwY",
             authDomain: "michael-and-douris-world.firebaseapp.com",
@@ -226,18 +226,21 @@
         };
 
         // Initialize Firebase
-        // We removed the duplicate/incorrect 'const app = ...' lines that were causing the crash.
         let app, auth, db;
         let isConfigured = false;
         const appId = 'md-world-public'; 
 
         try {
             // Using the global 'firebase' object from the CDN scripts
-            app = firebase.initializeApp(firebaseConfig);
-            auth = firebase.auth();
-            db = firebase.firestore();
-            isConfigured = true;
-            console.log("Firebase Initialized Successfully");
+            if (typeof firebase !== 'undefined') {
+                app = firebase.initializeApp(firebaseConfig);
+                auth = firebase.auth();
+                db = firebase.firestore();
+                isConfigured = true;
+                console.log("Firebase Initialized Successfully");
+            } else {
+                console.error("Firebase SDK not loaded");
+            }
         } catch (e) {
             console.error("Firebase Init Error:", e);
         }
@@ -652,7 +655,16 @@
             try {
                 await auth.signInAnonymously();
                 auth.onAuthStateChanged((user) => { if (user) { myUser = user; document.getElementById('login-screen').classList.add('hidden'); document.getElementById('game-ui').classList.remove('hidden'); initGame(); } });
-            } catch (err) { console.error(err); status.innerText = "Connection failed. Check console."; btn.disabled = false; }
+            } catch (err) {
+                console.error(err);
+                if (err.code === 'auth/configuration-not-found' || err.code === 'auth/operation-not-allowed') {
+                    status.innerText = "Error: Enable Anonymous Auth!";
+                    alert("Setup missing: Go to Firebase Console > Build > Authentication > Sign-in method > Enable 'Anonymous'.");
+                } else {
+                    status.innerText = "Connection failed. Check console.";
+                }
+                btn.disabled = false;
+            }
         });
 
         function onWindowResize() { if(camera && renderer) { camera.aspect = window.innerWidth / window.innerHeight; camera.updateProjectionMatrix(); renderer.setSize(window.innerWidth, window.innerHeight); } }
