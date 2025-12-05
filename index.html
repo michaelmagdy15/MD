@@ -26,7 +26,7 @@
             margin: 0;
             overflow: hidden;
             font-family: 'Quicksand', sans-serif;
-            background: linear-gradient(to bottom, #1a1a2e, #16213e, #ffdac1); /* Night/Sunset gradient for stars */
+            background: linear-gradient(to bottom, #1a1a2e, #16213e, #ffdac1);
             color: var(--text);
             user-select: none;
             -webkit-user-select: none;
@@ -61,7 +61,15 @@
         button:active { transform: scale(0.95); }
         button:disabled { background: #ccc; cursor: not-allowed; box-shadow: none; }
 
+        /* HUD Elements */
         #hud { position: absolute; top: 20px; right: 20px; display: flex; flex-direction: column; gap: 15px; pointer-events: none; }
+        
+        #room-info {
+            position: absolute; top: 20px; left: 20px; 
+            background: rgba(255,255,255,0.8); padding: 10px 20px; border-radius: 20px;
+            color: #ff6b6b; font-weight: bold; pointer-events: none;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
 
         .action-bar {
             display: flex; flex-direction: column; gap: 10px; pointer-events: auto;
@@ -138,6 +146,7 @@
         @media (max-width: 768px) {
             #joystick-zone { display: block; }
             #hud { top: 10px; right: 10px; }
+            #room-info { top: 10px; left: 10px; font-size: 0.9rem; }
             .action-bar { flex-direction: row; gap: 10px; padding: 8px; flex-wrap: wrap; justify-content: flex-end; width: 200px; }
             .action-btn { width: 45px; height: 45px; font-size: 20px; }
             #chat-container { bottom: 200px; width: 280px; height: 120px; }
@@ -166,8 +175,7 @@
                 </select>
             </div>
             <div class="form-group">
-                <!-- Cleared default value for secrecy -->
-                <input type="text" id="room-code" placeholder="Enter Secret Room Name" value="">
+                <input type="text" id="room-code" placeholder="Enter Room Name" value="">
             </div>
             <button id="btn-enter">Enter World</button>
             <div id="status-msg" style="margin-top: 15px; color: #ff6b6b; min-height: 20px; font-weight: bold;"></div>
@@ -176,6 +184,8 @@
         <div id="game-ui" class="hidden">
             <div id="floating-message"></div>
             
+            <div id="room-info">Room: <span id="disp-room">...</span> | Players: <span id="disp-players">1</span></div>
+
             <div id="interaction-panel">
                 <h3 id="panel-title">Memory</h3>
                 <p id="panel-text">...</p>
@@ -349,6 +359,8 @@
                 initNetwork();
                 initChat();
                 initTicTacToe();
+                // FORCE INITIAL UPDATE
+                setTimeout(() => sendUpdate(false), 1000);
             }
         }
 
@@ -885,6 +897,11 @@
             if(!db) return;
             const roomRef = db.collection('artifacts').doc(appId).collection('public').doc('data').collection('mdworld_rooms').doc(roomId).collection('players');
             unsubscribeRoom = roomRef.onSnapshot(snapshot => {
+                // Update Player Count
+                const count = snapshot.size;
+                const countEl = document.getElementById('disp-players');
+                if(countEl) countEl.innerText = count;
+
                 snapshot.docChanges().forEach(change => {
                     const data = change.doc.data(); const pid = change.doc.id;
                     if (pid === myUser.uid) return;
@@ -941,10 +958,15 @@
         }
 
         document.getElementById('btn-enter').addEventListener('click', async () => {
-            const btn = document.getElementById('btn-enter'); const status = document.getElementById('status-msg'); const codeInput = document.getElementById('room-code').value.toUpperCase();
+            const btn = document.getElementById('btn-enter'); const status = document.getElementById('status-msg'); const codeInput = document.getElementById('room-code').value.trim();
             if (!isConfigured) { status.innerText = "Error: Firebase keys missing. Edit index.html!"; alert("You must edit index.html and paste your Firebase Configuration keys."); return; }
             if(!codeInput) { status.innerText = "Please enter a Room Code!"; return; }
-            btn.disabled = true; status.innerText = "Connecting..."; myCharType = document.getElementById('char-select').value; roomId = codeInput;
+            
+            btn.disabled = true; status.innerText = "Connecting..."; myCharType = document.getElementById('char-select').value; roomId = codeInput.toUpperCase();
+            
+            // Update HUD text
+            document.getElementById('disp-room').innerText = roomId;
+
             try {
                 await auth.signInAnonymously();
                 auth.onAuthStateChanged((user) => { if (user) { myUser = user; document.getElementById('login-screen').classList.add('hidden'); document.getElementById('game-ui').classList.remove('hidden'); initGame(); } });
