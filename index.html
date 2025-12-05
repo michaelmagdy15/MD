@@ -756,6 +756,8 @@
                     // Initialize if not exists
                     docRef.set({ board: Array(9).fill(null), turn: 'X' });
                 }
+            }, (error) => {
+                console.error("TTT Error:", error);
             });
         }
 
@@ -909,6 +911,12 @@
                     if (change.type === 'modified' && otherPlayers[pid]) { const op = otherPlayers[pid]; op.targetPos.set(data.x, data.y, data.z); op.targetRot = data.rot; op.isMoving = data.moving; if (data.emote) handleEmote(op.mesh, data.emote); }
                     if (change.type === 'removed' && otherPlayers[pid]) { scene.remove(otherPlayers[pid].mesh); delete otherPlayers[pid]; }
                 });
+            }, (error) => {
+                console.error("Network Error:", error);
+                // Detect specific API error
+                if (error.message.includes("Cloud Firestore API") || error.code === 'permission-denied') {
+                    alert("GAME SETUP ERROR:\n\nThe Firestore Database is not enabled.\n\n1. Go to Firebase Console\n2. Click 'Firestore Database'\n3. Click 'Create Database'");
+                }
             });
         }
 
@@ -922,6 +930,8 @@
                     const div = document.createElement('div'); div.className = 'chat-msg'; div.innerHTML = `<span class="chat-name">${data.name}:</span> ${data.text}`; chatBox.appendChild(div);
                 }); chatBox.scrollTop = chatBox.scrollHeight;
                 if(msgs.length > 0) playSound('pop');
+            }, (error) => {
+                console.error("Chat Error:", error);
             });
             document.getElementById('chat-send').addEventListener('click', sendChat);
             document.getElementById('chat-input').addEventListener('keypress', (e) => { if(e.key === 'Enter') sendChat(); });
