@@ -8,7 +8,8 @@ interface Scene3DProps {
     isJumping: boolean;
     onResetJump: () => void;
     myCharType: CharacterType;
-    players: Record<string, PlayerData>;
+    players: Record<string, PlayerData>; // Keep for initial render/count
+    playersRef: React.MutableRefObject<Record<string, PlayerData>>; // NEW: For live updates
     onUpdatePosition: (x: number, y: number, z: number, rot: number, moving: boolean) => void;
     onNearMemory: (id: number | null) => void;
     myEmote: { name: string, time: number } | null;
@@ -27,6 +28,7 @@ const Scene3D: React.FC<Scene3DProps> = ({
     onResetJump,
     myCharType,
     players,
+    playersRef,
     onUpdatePosition,
     onNearMemory,
     myEmote,
@@ -49,7 +51,6 @@ const Scene3D: React.FC<Scene3DProps> = ({
 
     // Game state refs
     const inputRef = useRef(input);
-    const playersDataRef = useRef(players);
     const myEmoteRef = useRef(myEmote);
     const prevBurgerCount = useRef(burgerCount);
     const isSittingRef = useRef(isSitting);
@@ -75,8 +76,7 @@ const Scene3D: React.FC<Scene3DProps> = ({
 
     // Sync refs
     useEffect(() => { inputRef.current = input; }, [input]);
-    useEffect(() => { playersDataRef.current = players; }, [players]);
-    useEffect(() => { myEmoteRef.current = myEmote; }, [myEmote]);
+    // playersDataRef removed, using playersRef directly in animate loop
     useEffect(() => { myEmoteRef.current = myEmote; }, [myEmote]);
     useEffect(() => { isSittingRef.current = isSitting; }, [isSitting]);
     useEffect(() => { isSprintingRef.current = isSprinting; }, [isSprinting]);
@@ -958,8 +958,8 @@ const Scene3D: React.FC<Scene3DProps> = ({
             }
 
             // Proximity Check
-            if (myMeshRef.current && Object.keys(playersDataRef.current).length > 0) {
-                Object.values(playersDataRef.current).forEach((p: any) => {
+            if (myMeshRef.current && Object.keys(playersRef.current).length > 0) {
+                Object.values(playersRef.current).forEach((p: any) => {
                     if (playersMeshesRef.current[p.id]) {
                         const dist = myMeshRef.current!.position.distanceTo(playersMeshesRef.current[p.id].position);
                         if (dist < 3) {
@@ -977,7 +977,7 @@ const Scene3D: React.FC<Scene3DProps> = ({
             }
 
             const inputs = inputRef.current;
-            const otherPlayers = playersDataRef.current;
+            const otherPlayers = playersRef.current; // Use playersRef for live updates
             const myMesh = myMeshRef.current;
             const myEmoteData = myEmoteRef.current;
             const callbacks = callbacksRef.current;
@@ -1071,9 +1071,10 @@ const Scene3D: React.FC<Scene3DProps> = ({
 
             }
 
-            // Sync Other Players
-            Object.keys(otherPlayers).forEach(pid => {
-                const pData = otherPlayers[pid];
+            // Sync Other Players (Read from REF for performance)
+            const livePlayers = playersRef.current || players;
+            Object.keys(livePlayers).forEach(pid => {
+                const pData = livePlayers[pid];
                 let mesh = playersMeshesRef.current[pid];
 
                 if (!mesh) {
@@ -1094,13 +1095,16 @@ const Scene3D: React.FC<Scene3DProps> = ({
                 if (pData.type === 'douri' && myCharType === 'michael' && pData.lastPunchTime) {
                     const lastProcessed = lastProcessedPunchRef.current[pid] || 0;
                     if (pData.lastPunchTime > lastProcessed) {
+                        console.log(`PUNCH DETECTED from ${pid} at ${pData.lastPunchTime}`); // DEBUG
                         lastProcessedPunchRef.current[pid] = pData.lastPunchTime;
 
                         // Check distance
                         if (myMeshRef.current) {
                             const dist = myMeshRef.current.position.distanceTo(mesh.position);
+                            console.log(`Distance to puncher: ${dist}`); // DEBUG
                             if (dist < 5) { // 5 meter range!
                                 // PUNCHED!
+                                console.log("KNOCKBACK APPLIED!"); // DEBUG
                                 const dir = new THREE.Vector3().subVectors(myMeshRef.current.position, mesh.position).normalize();
                                 myMeshRef.current.userData.velocityY = 15; // Launch UP
                                 myMeshRef.current.userData.isJumping = true;

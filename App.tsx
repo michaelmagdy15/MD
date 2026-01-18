@@ -18,6 +18,7 @@ const App: React.FC = () => {
   const [input, setInput] = useState<JoystickData>({ x: 0, y: 0 });
   const [isJumping, setIsJumping] = useState(false);
   const [players, setPlayers] = useState<Record<string, PlayerData>>({});
+  const playersRef = useRef<Record<string, PlayerData>>({}); // Optimization: Mutable ref for positions
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [activeMemoryId, setActiveMemoryId] = useState<number | null>(null);
   const [xoState, setXoState] = useState<TicTacToeState>({ board: Array(9).fill(null), isXNext: true, winner: null });
@@ -97,15 +98,30 @@ const App: React.FC = () => {
       channel
         .on('presence', { event: 'sync' }, () => {
           const state = channel.presenceState();
-          const newPlayers: Record<string, PlayerData> = {};
+          const currentPlayers = playersRef.current;
+          let hasNewOrGone = false;
+
           Object.keys(state).forEach(key => {
             if (key !== myIdRef.current) {
               const p = state[key][0] as any;
-              newPlayers[key] = p;
+              if (!currentPlayers[key]) hasNewOrGone = true; // New player
+              currentPlayers[key] = p; // Update ref directly (no re-render for position)
             }
           });
-          setPlayers(newPlayers);
-          setGameState(prev => ({ ...prev, playersCount: Object.keys(newPlayers).length + 1 }));
+
+          // Check for left players
+          Object.keys(currentPlayers).forEach(key => {
+            if (!state[key] && key !== myIdRef.current) {
+              delete currentPlayers[key];
+              hasNewOrGone = true;
+            }
+          });
+
+          // Only trigger re-render if player Count changes (joined/left)
+          if (hasNewOrGone) {
+            setPlayers({ ...currentPlayers });
+            setGameState(prev => ({ ...prev, playersCount: Object.keys(currentPlayers).length + 1 }));
+          }
         })
         .subscribe(async (status) => {
           if (status === 'SUBSCRIBED') {
@@ -135,7 +151,12 @@ const App: React.FC = () => {
       supabase
         .channel(`chat:${roomId}`)
         .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'chat_messages', filter: `room_id=eq.${roomId}` }, (payload) => {
-          setMessages(prev => [...prev.slice(-49), payload.new as ChatMessage]);
+          const newMsg = payload.new as ChatMessage;
+          setMessages(prev => [...prev.slice(-49), newMsg]);
+          // Play sound if not my message
+          if (newMsg.user_name !== (char === 'michael' ? 'Michael' : 'Douri')) {
+            notifSoundRef.current?.play().catch(e => { });
+          }
         })
         .subscribe();
 
@@ -288,16 +309,16 @@ const App: React.FC = () => {
   };
 
   const toggleMusic = () => {
-    if (!audioRef.current) {
-      audioRef.current = new Audio('https://cdn.pixabay.com/download/audio/2022/05/27/audio_1808fbf07a.mp3?filename=piano-moment-111003.mp3');
-      audioRef.current.loop = true;
-      audioRef.current.volume = 0.3;
+    if (!bgmRef.current) {
+      bgmRef.current = new Audio('https://cdn.pixabay.com/download/audio/2022/05/27/audio_1808fbf07a.mp3?filename=piano-moment-111003.mp3');
+      bgmRef.current.loop = true;
+      bgmRef.current.volume = 0.3;
     }
 
-    if (audioRef.current.paused) {
-      audioRef.current.play().catch(e => console.log(e));
+    if (bgmRef.current.paused) {
+      bgmRef.current.play().catch(e => console.log(e));
     } else {
-      audioRef.current.pause();
+      bgmRef.current.pause();
     }
   };
 
@@ -312,8 +333,8 @@ const App: React.FC = () => {
           input={input}
           isJumping={isJumping}
           onResetJump={() => setIsJumping(false)}
-          myCharType={gameState.character}
           players={players}
+          playersRef={playersRef}
           onUpdatePosition={updatePosition}
           onNearMemory={setActiveMemoryId}
           myEmote={localEmote}
