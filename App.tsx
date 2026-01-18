@@ -287,51 +287,52 @@ const App: React.FC = () => {
   }
 
   return (
-    <div className="relative w-full h-full">
-      <Scene3D
-        input={input}
-        isJumping={isJumping}
-        onResetJump={() => setIsJumping(false)}
-        myCharType={gameState.character}
-        players={players}
-        onUpdatePosition={updatePosition}
-        onNearMemory={setActiveMemoryId}
-        myEmote={localEmote}
-        onNearStove={setIsNearStove}
-        onNearTreehouse={setIsNearTreehouse}
-        teleportRequest={teleportReq}
-        burgerCount={burgerCount}
-        onNearBench={(isNear, id) => { setIsNearBench(isNear); setBenchId(id); }}
-        isSitting={isSitting}
-        isSprinting={sprinting}
-      />
-      <GameUI
-        roomCode={gameState.roomId}
-        playerCount={gameState.playersCount}
-        messages={messages}
-        onSendMessage={sendMessage}
-        onMove={setInput}
-        onStopMove={() => setInput({ x: 0, y: 0 })}
-        onJump={() => setIsJumping(true)}
-        onEmote={handleEmote}
-        onToggleMusic={toggleMusic}
-        activeMemoryId={activeMemoryId}
-        xoState={xoState}
-        onXOAction={handleXOAction}
-        players={players}
-        myId={myIdRef.current}
-        onLeave={handleLeave}
-        isNearStove={isNearStove}
-        burgerCount={burgerCount}
-        onCook={handleCook}
-        isNearTreehouse={isNearTreehouse}
-        onEnterTreehouse={handleEnterTreehouse}
-        isNearBench={isNearBench}
-        isSitting={isSitting}
-        onToggleSit={handleToggleSit}
-      />
-    </div>
-  );
+    <div className="fixed inset-0 w-screen h-screen overflow-hidden bg-black">
+      <div className="absolute inset-0 z-0">
+        <Scene3D
+          input={input}
+          isJumping={isJumping}
+          onResetJump={() => setIsJumping(false)}
+          myCharType={gameState.character}
+          players={players}
+          onUpdatePosition={updatePosition}
+          onNearMemory={setActiveMemoryId}
+          myEmote={localEmote}
+          onNearStove={setIsNearStove}
+          onNearTreehouse={setIsNearTreehouse}
+          teleportRequest={teleportReq}
+          burgerCount={burgerCount}
+          onNearBench={(isNear, id) => { setIsNearBench(isNear); setBenchId(id); }}
+          isSitting={isSitting}
+          isSprinting={sprinting}
+        />
+        <GameUI
+          roomCode={gameState.roomId}
+          playerCount={gameState.playersCount}
+          messages={messages}
+          onSendMessage={sendMessage}
+          onMove={setInput}
+          onStopMove={() => setInput({ x: 0, y: 0 })}
+          onJump={() => setIsJumping(true)}
+          onEmote={handleEmote}
+          onToggleMusic={toggleMusic}
+          activeMemoryId={activeMemoryId}
+          xoState={xoState}
+          onXOAction={handleXOAction}
+          players={players}
+          myId={myIdRef.current}
+          onLeave={handleLeave}
+          isNearStove={isNearStove}
+          burgerCount={burgerCount}
+          onCook={handleCook}
+          isNearTreehouse={isNearTreehouse}
+          onEnterTreehouse={handleEnterTreehouse}
+          isNearBench={isNearBench}
+          isSitting={isSitting}
+          onToggleSit={handleToggleSit}
+        />
+      </div>
+      );
 };
 
-export default App;
+      export default App;

@@ -122,90 +122,107 @@ const GameUI: React.FC<GameUIProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 pointer-events-none z-40 select-none overflow-hidden" style={{ touchAction: 'none' }}>
+    <div className="fixed inset-0 pointer-events-none z-40 select-none overflow-hidden flex flex-col justify-between p-safe" style={{ padding: 'env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left)' }}>
 
-      {/* Top Bar - Safe Area Padding */}
-      <div className="absolute top-0 left-0 right-0 p-4 pt-12 flex justify-between items-start pointer-events-auto bg-gradient-to-b from-black/20 to-transparent">
-        <div className="flex gap-4">
-          <div className="bg-white/80 backdrop-blur-md px-4 py-2 rounded-2xl shadow-lg text-[#ff6b6b] font-bold">
+      {/* Top Bar */}
+      <div className="flex justify-between items-start pt-4 px-4 w-full pointer-events-none">
+        <div className="flex gap-3 pointer-events-auto">
+          <div className="bg-white/90 backdrop-blur-md px-4 py-2 rounded-2xl shadow-xl border border-white/20 text-[#ff6b6b] font-bold">
             <p className="text-sm">Room: {roomCode}</p>
-            <p className="text-xs text-gray-600">Players: {playerCount}</p>
+            <p className="text-xs text-gray-500 font-medium">Players: {playerCount}</p>
           </div>
 
-          <button onClick={onLeave} className="flex items-center gap-2 bg-red-500 text-white px-4 py-2 rounded-2xl shadow-lg font-bold text-xs active:scale-95">
-            <LogOut size={16} /> Leave
+          <button onClick={onLeave} className="h-10 bg-red-500/90 backdrop-blur-md text-white px-4 rounded-2xl shadow-xl font-bold text-xs flex items-center gap-2 border border-white/20 active:scale-95 transition-all">
+            <LogOut size={16} /> <span className="hidden sm:inline">Leave</span>
           </button>
         </div>
 
         {/* Top Right Controls */}
-        <div className="flex flex-col items-end gap-2">
+        <div className="flex flex-col items-end gap-3 pointer-events-auto">
           {/* Mini Map */}
-          <div className="relative w-24 h-24 mb-2">
-            <canvas ref={canvasRef} width={96} height={96} className="w-full h-full" />
-            <div className="absolute bottom-0 w-full text-center text-[10px] text-white font-bold drop-shadow-md">MAP</div>
+          <div className="relative w-20 h-20 bg-black/20 backdrop-blur-md rounded-full overflow-hidden border-2 border-white/30 shadow-2xl">
+            <canvas ref={canvasRef} width={80} height={80} className="w-full h-full" />
           </div>
 
           <div className="flex flex-col gap-2">
-            <button onClick={() => setShowXO(!showXO)} className="w-12 h-12 bg-white rounded-full flex items-center justify-center shadow-lg active:scale-95 transition-transform text-purple-600">
+            <button onClick={() => setShowXO(!showXO)} className="w-12 h-12 bg-white/90 backdrop-blur-md rounded-full flex items-center justify-center shadow-xl border border-white/20 active:scale-95 text-purple-600">
               <Grid3X3 size={24} />
             </button>
-            <button onClick={() => setShowChat(!showChat)} className="w-12 h-12 bg-white rounded-full flex items-center justify-center shadow-lg active:scale-95 transition-transform text-[#5d54a4]">
+            <button onClick={() => setShowChat(!showChat)} className="w-12 h-12 bg-white/90 backdrop-blur-md rounded-full flex items-center justify-center shadow-xl border border-white/20 active:scale-95 text-[#5d54a4]">
               <MessageSquare size={24} />
             </button>
 
             {/* Emotes */}
-            <div className="flex flex-col gap-1 bg-black/10 p-1 rounded-full">
-              <button onClick={() => onEmote('heart')} className="w-10 h-10 bg-white rounded-full flex items-center justify-center shadow active:scale-95 text-red-500">
+            <div className="flex flex-col gap-1.5 bg-black/10 backdrop-blur-md p-1 rounded-full border border-white/10">
+              <button onClick={() => onEmote('heart')} className="w-10 h-10 bg-white/90 rounded-full flex items-center justify-center shadow active:scale-95 text-red-500">
                 <Heart size={20} fill="currentColor" />
               </button>
-              <button onClick={() => onEmote('dance')} className="w-10 h-10 bg-white rounded-full flex items-center justify-center shadow active:scale-95 text-blue-500">
+              <button onClick={() => onEmote('dance')} className="w-10 h-10 bg-white/90 rounded-full flex items-center justify-center shadow active:scale-95 text-blue-500">
                 <Music size={20} />
               </button>
-              <button onClick={() => onEmote('wave')} className="w-10 h-10 bg-white rounded-full flex items-center justify-center shadow active:scale-95 text-yellow-500">
+              <button onClick={() => onEmote('wave')} className="w-10 h-10 bg-white/90 rounded-full flex items-center justify-center shadow active:scale-95 text-yellow-500">
                 <Hand size={20} />
               </button>
             </div>
 
-            <button onClick={onToggleMusic} className="w-12 h-12 bg-white rounded-full flex items-center justify-center shadow-lg active:scale-95 transition-transform text-green-500 mt-2">
+            <button onClick={onToggleMusic} className="w-12 h-12 bg-white/90 backdrop-blur-md rounded-full flex items-center justify-center shadow-xl border border-white/20 active:scale-95 text-green-500">
               <Music size={24} />
             </button>
           </div>
         </div>
       </div>
 
-      {/* Action Buttons */}
-      <div className="absolute bottom-32 left-1/2 -translate-x-1/2 flex gap-4 pointer-events-auto items-end">
-        {isNearStove && (
-          <div className="flex flex-col items-center animate-bounce">
-            <div className="bg-white/90 px-3 py-1 rounded-full mb-1 text-xs font-bold text-orange-600 shadow">
-              Burgers: {burgerCount}
+      {/* Bottom Interface */}
+      <div className="flex flex-col w-full pb-8 px-8 pointer-events-none">
+
+        {/* Action Buttons (Near Object) */}
+        <div className="flex justify-center gap-4 mb-4">
+          {isNearStove && (
+            <div className="flex flex-col items-center animate-bounce pointer-events-auto">
+              <div className="bg-white/90 px-3 py-1 rounded-full mb-1 text-xs font-bold text-orange-600 shadow-xl border border-white/20 backdrop-blur-md">
+                Burgers: {burgerCount}
+              </div>
+              <button
+                onClick={onCook}
+                className="w-16 h-16 bg-orange-500/90 rounded-full border-4 border-white shadow-2xl flex items-center justify-center text-white active:scale-95"
+              >
+                <UtensilsCrossed size={32} />
+              </button>
             </div>
+          )}
+
+          {isNearTreehouse && (
             <button
-              onClick={onCook}
-              className="w-16 h-16 bg-orange-500 rounded-full border-4 border-white shadow-xl flex items-center justify-center text-white active:scale-95"
+              onClick={onEnterTreehouse}
+              className="w-16 h-16 bg-green-600/90 rounded-full border-4 border-white shadow-2xl flex items-center justify-center text-white active:scale-95 animate-pulse pointer-events-auto"
             >
-              <UtensilsCrossed size={32} />
+              <ArrowUpCircle size={32} />
             </button>
+          )}
+
+          {(isNearBench || isSitting) && (
+            <button
+              onClick={onToggleSit}
+              className={`w-16 h-16 rounded-full border-4 border-white shadow-2xl flex items-center justify-center text-white active:scale-95 transition-all pointer-events-auto ${isSitting ? 'bg-red-500' : 'bg-blue-600'}`}
+            >
+              {isSitting ? <X size={32} /> : <Armchair size={32} />}
+            </button>
+          )}
+        </div>
+
+        {/* Movement Controls */}
+        <div className="flex justify-between items-end w-full max-w-lg mx-auto pointer-events-none">
+          <div className="pointer-events-auto backdrop-blur-sm rounded-full bg-black/5 p-2">
+            <Joystick onMove={onMove} onStop={onStopMove} />
           </div>
-        )}
 
-        {isNearTreehouse && (
           <button
-            onClick={onEnterTreehouse}
-            className="w-16 h-16 bg-green-600 rounded-full border-4 border-white shadow-xl flex items-center justify-center text-white active:scale-95 animate-pulse"
+            onPointerDown={onJump}
+            className="w-20 h-20 bg-[#ff6b6b]/90 backdrop-blur-md rounded-full border-4 border-white shadow-2xl flex items-center justify-center active:bg-[#ff6b6b] active:scale-90 transition-all pointer-events-auto"
           >
-            <ArrowUpCircle size={32} />
+            <span className="text-3xl text-white">⬆️</span>
           </button>
-        )}
-
-        {(isNearBench || isSitting) && (
-          <button
-            onClick={onToggleSit}
-            className={`w-16 h-16 rounded-full border-4 border-white shadow-xl flex items-center justify-center text-white active:scale-95 transition-all ${isSitting ? 'bg-red-500' : 'bg-blue-600'}`}
-          >
-            {isSitting ? <X size={32} /> : <Armchair size={32} />}
-          </button>
-        )}
+        </div>
       </div>
 
       {/* XO Game Modal - FIXED CENTERING */}
@@ -264,45 +281,36 @@ const GameUI: React.FC<GameUIProps> = ({
         </div>
       )}
 
-      {/* Chat */}
+      {/* Chat OVERLAY */}
       {showChat && (
-        <div className="absolute bottom-36 left-1/2 -translate-x-1/2 w-[90%] max-w-sm pointer-events-auto transition-all">
-          <div className="bg-black/40 backdrop-blur-md rounded-2xl p-3 h-48 overflow-y-auto mb-2 flex flex-col">
-            {messages.map((msg, idx) => (
-              <div key={idx} className="mb-1 text-sm text-white drop-shadow-md">
-                <span className="font-bold text-[#ffb7b2] mr-1">{msg.user_name}:</span>
-                <span className="break-words">{msg.message}</span>
-              </div>
-            ))}
-            <div ref={chatEndRef} />
-          </div>
-          <form onSubmit={handleChatSubmit} className="flex gap-2">
-            <input
-              value={chatInput}
-              onChange={e => setChatInput(e.target.value)}
-              className="flex-1 bg-white/90 rounded-full px-4 py-3 outline-none border-2 border-[#ffb7b2] text-gray-800"
-              placeholder="Say something..."
-            />
-            <button type="submit" className="w-12 h-12 bg-[#ff6b6b] rounded-full flex items-center justify-center text-white font-bold shadow-md">
-              ➤
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[90%] max-w-sm pointer-events-auto z-[60]">
+          <div className="bg-black/60 backdrop-blur-xl rounded-3xl p-4 shadow-2xl border-2 border-white/20">
+            <div className="h-64 overflow-y-auto mb-4 flex flex-col gap-2 scrollbar-thin">
+              {messages.map((msg, idx) => (
+                <div key={idx} className="bg-white/10 rounded-xl p-2 text-sm text-white border border-white/5">
+                  <span className="font-bold text-[#ffb7b2] mr-2">{msg.user_name}:</span>
+                  <span className="break-words">{msg.message}</span>
+                </div>
+              ))}
+              <div ref={chatEndRef} />
+            </div>
+            <form onSubmit={handleChatSubmit} className="flex gap-2">
+              <input
+                value={chatInput}
+                onChange={e => setChatInput(e.target.value)}
+                className="flex-1 bg-white/20 rounded-2xl px-4 py-3 outline-none border border-white/30 text-white placeholder-white/50"
+                placeholder="Say something..."
+              />
+              <button type="submit" className="w-12 h-12 bg-[#ff6b6b] rounded-2xl flex items-center justify-center text-white shadow-lg active:scale-95">
+                ➤
+              </button>
+            </form>
+            <button onClick={() => setShowChat(false)} className="absolute -top-3 -right-3 w-10 h-10 bg-white rounded-full flex items-center justify-center shadow-2xl text-gray-500 border-2 border-[#ffb7b2]">
+              <X size={20} />
             </button>
-          </form>
-          <button onClick={() => setShowChat(false)} className="absolute -top-3 -right-3 w-8 h-8 bg-white rounded-full flex items-center justify-center shadow text-gray-500">
-            <X size={16} />
-          </button>
+          </div>
         </div>
       )}
-
-      <div className="pointer-events-auto">
-        <Joystick onMove={onMove} onStop={onStopMove} />
-      </div>
-
-      <button
-        onPointerDown={onJump}
-        className="absolute bottom-8 right-8 w-20 h-20 bg-[#ff6b6b]/90 rounded-full border-4 border-white/30 shadow-xl flex items-center justify-center active:bg-[#ff6b6b] active:scale-95 transition-all pointer-events-auto"
-      >
-        <span className="text-3xl text-white">⬆️</span>
-      </button>
 
     </div>
   );

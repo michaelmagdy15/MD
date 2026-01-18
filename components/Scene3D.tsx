@@ -493,7 +493,7 @@ const Scene3D: React.FC<Scene3DProps> = ({
         // Helper: Build World
         const buildWorld = () => {
             // Island Base
-            const island = new THREE.Mesh(new THREE.CylinderGeometry(WORLD_RADIUS, WORLD_RADIUS - 8, 5, 48), new THREE.MeshStandardMaterial({ color: COLORS.grass, flatShading: true }));
+            const island = new THREE.Mesh(new THREE.CylinderGeometry(WORLD_RADIUS, WORLD_RADIUS - 8, 5, 48), new THREE.MeshStandardMaterial({ color: COLORS.sand, flatShading: true }));
             island.position.y = -2.5; island.receiveShadow = true; worldGroup.add(island);
 
             // --- HILLS ---
@@ -1222,10 +1222,20 @@ const Scene3D: React.FC<Scene3DProps> = ({
             renderer.render(scene, camera);
         };
 
+        const handleResize = () => {
+            const w = window.innerWidth;
+            const h = window.innerHeight;
+            renderer.setSize(w, h);
+            camera.aspect = w / h;
+            camera.updateProjectionMatrix();
+        };
+        window.addEventListener('resize', handleResize);
+
         animate();
 
         return () => {
             cancelAnimationFrame(animationId);
+            window.removeEventListener('resize', handleResize);
             if (mountRef.current) {
                 mountRef.current.removeChild(renderer.domElement);
             }
