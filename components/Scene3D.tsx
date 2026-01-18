@@ -67,8 +67,11 @@ const Scene3D: React.FC<Scene3DProps> = ({
 
     // Pinch Zoom Refs
     const touchDistRef = useRef<number | null>(null);
-    const heartsRef = useRef<{ mesh: THREE.Mesh; speed: number }[]>([]);
+    const heartsRef = useRef<{ mesh: THREE.Mesh; speed: number }[]>([]);        // Floating Hearts System
     const heartAssetsRef = useRef<{ geo: THREE.ShapeGeometry; mat: THREE.MeshBasicMaterial } | null>(null);
+
+    // Punch Tracking
+    const lastProcessedPunchRef = useRef<Record<string, number>>({});
 
     // Sync refs
     useEffect(() => { inputRef.current = input; }, [input]);
@@ -485,7 +488,8 @@ const Scene3D: React.FC<Scene3DProps> = ({
 
             group.userData = {
                 model, leftArm: leftArmGroup, rightArm: rightArmGroup, leftLeg: leftLegGroup, rightLeg: rightLegGroup, head, type,
-                walkTime: 0, velocityY: 0, isJumping: false, emoteTimer: 0, currentEmote: null
+                walkTime: 0, velocityY: 0, isJumping: false, emoteTimer: 0, currentEmote: null,
+                knockback: new THREE.Vector3()
             };
             return group;
         };
@@ -996,6 +1000,12 @@ const Scene3D: React.FC<Scene3DProps> = ({
                     }
                 }
 
+                // Apply Knockback Friction
+                if (myMesh.userData.knockback) {
+                    myMesh.position.addScaledVector(myMesh.userData.knockback, delta);
+                    myMesh.userData.knockback.multiplyScalar(0.9); // Friction
+                }
+
                 if ((inputs.x !== 0 || inputs.y !== 0) && !sitting) {
                     speed = isSprintingRef.current ? 1.8 : 1;
                     const actualMoveSpeed = moveSpeed * speed;
@@ -1079,6 +1089,26 @@ const Scene3D: React.FC<Scene3DProps> = ({
 
                 const speed = pData.moving ? 1 : 0;
                 animateCharacter(mesh, speed, time, pData.emote?.name, pData.emote?.time || 0);
+
+                // Check for PUNCH event
+                if (pData.type === 'douri' && myCharType === 'michael' && pData.lastPunchTime) {
+                    const lastProcessed = lastProcessedPunchRef.current[pid] || 0;
+                    if (pData.lastPunchTime > lastProcessed) {
+                        lastProcessedPunchRef.current[pid] = pData.lastPunchTime;
+
+                        // Check distance
+                        if (myMeshRef.current) {
+                            const dist = myMeshRef.current.position.distanceTo(mesh.position);
+                            if (dist < 5) { // 5 meter range!
+                                // PUNCHED!
+                                const dir = new THREE.Vector3().subVectors(myMeshRef.current.position, mesh.position).normalize();
+                                myMeshRef.current.userData.velocityY = 15; // Launch UP
+                                myMeshRef.current.userData.isJumping = true;
+                                myMeshRef.current.userData.knockback.copy(dir).multiplyScalar(20); // Launch BACK
+                            }
+                        }
+                    }
+                }
             });
 
             // Cleanup

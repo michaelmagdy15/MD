@@ -222,6 +222,24 @@ const App: React.FC = () => {
     }).eq('room_id', gameState.roomId);
   };
 
+  const handlePunch = () => {
+    if (!channelRef.current) return;
+    updatePosition(
+      players[myIdRef.current]?.x || 0,
+      players[myIdRef.current]?.y || 0,
+      players[myIdRef.current]?.z || 0,
+      players[myIdRef.current]?.rot || 0,
+      false
+    );
+    // Force a separate update for the punch event with timestamp
+    const punchPayload = {
+      ...players[myIdRef.current],
+      type: gameState.character,
+      lastPunchTime: Date.now()
+    };
+    channelRef.current.track(punchPayload);
+  };
+
   const updatePosition = (x: number, y: number, z: number, rot: number, moving: boolean) => {
     if (!channelRef.current) return;
 
@@ -229,7 +247,9 @@ const App: React.FC = () => {
       x, y, z, rot, moving,
       type: gameState.character,
       id: myIdRef.current,
+      id: myIdRef.current,
       timestamp: Date.now(),
+      lastPunchTime: Date.now() - (players[myIdRef.current]?.lastPunchTime || 0) < 500 ? players[myIdRef.current]?.lastPunchTime : undefined,
       ...(localEmote && (Date.now() - localEmote.time < 3000) ? { emote: localEmote } : {})
     });
   };
@@ -329,7 +349,10 @@ const App: React.FC = () => {
           onEnterTreehouse={handleEnterTreehouse}
           isNearBench={isNearBench}
           isSitting={isSitting}
+          isSitting={isSitting}
           onToggleSit={handleToggleSit}
+          myCharType={gameState.character}
+          onPunch={handlePunch}
         />
       </div>
     </div>

@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { JoystickData, ChatMessage, Memory, TicTacToeState, PlayerData } from '../types';
+import { JoystickData, ChatMessage, Memory, TicTacToeState, PlayerData, CharacterType } from '../types';
 import Joystick from './Joystick';
 import { MEMORIES, WORLD_RADIUS } from '../constants';
-import { MessageSquare, Heart, Music, X, Hand, Grid3X3, RotateCw, LogOut, UtensilsCrossed, ArrowUpCircle, Armchair } from 'lucide-react';
+import { MessageSquare, Heart, Music, X, Hand, Grid3X3, RotateCw, LogOut, UtensilsCrossed, ArrowUpCircle, Armchair, Zap } from 'lucide-react';
 
 interface GameUIProps {
   roomCode: string;
@@ -27,7 +27,11 @@ interface GameUIProps {
   onEnterTreehouse: () => void;
   isNearBench: boolean;
   isSitting: boolean;
+  isNearBench: boolean;
+  isSitting: boolean;
   onToggleSit: () => void;
+  myCharType: CharacterType;
+  onPunch: () => void;
 }
 
 const GameUI: React.FC<GameUIProps> = ({
@@ -53,7 +57,10 @@ const GameUI: React.FC<GameUIProps> = ({
   onEnterTreehouse,
   isNearBench,
   isSitting,
-  onToggleSit
+  isSitting,
+  onToggleSit,
+  myCharType,
+  onPunch
 }) => {
   const [showChat, setShowChat] = useState(false);
   const [showXO, setShowXO] = useState(false);
@@ -206,6 +213,16 @@ const GameUI: React.FC<GameUIProps> = ({
               className={`w-16 h-16 rounded-full border-4 border-white shadow-2xl flex items-center justify-center text-white active:scale-95 transition-all pointer-events-auto ${isSitting ? 'bg-red-500' : 'bg-blue-600'}`}
             >
               {isSitting ? <X size={32} /> : <Armchair size={32} />}
+            </button>
+          )}
+
+          {/* PUNCH BUTTON (Douri Only) */}
+          {myCharType === 'douri' && (
+            <button
+              onClick={onPunch}
+              className="w-16 h-16 bg-red-600/90 rounded-full border-4 border-white shadow-2xl flex items-center justify-center text-white active:scale-90 transition-all pointer-events-auto animate-pulse"
+            >
+              <Zap size={32} fill="yellow" />
             </button>
           )}
         </div>

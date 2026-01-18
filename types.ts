@@ -12,6 +12,7 @@ export interface PlayerData {
     name: string;
     time: number;
   };
+  lastPunchTime?: number;
   timestamp?: any;
 }
 
