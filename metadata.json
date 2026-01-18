@@ -1,0 +1,5 @@
+{
+  "name": "M&D World - 400 Days",
+  "description": "A 3D multiplayer world celebrating 400 days, rebuilt with React, Three.js, and Tailwind.",
+  "requestFramePermissions": []
+}
