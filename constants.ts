@@ -12,10 +12,10 @@ export const COLORS = {
 export const WORLD_RADIUS = 80;
 
 export const MEMORIES: Memory[] = [
-  { 
-      id: 1, x: -10, z: -10, title: "Day 1", 
-      text: "Do you remember when we first started talking? I knew then you were special.",
-      image: "https://i.ibb.co/xqgsXQ45/Screenshot-1.png" 
+  {
+    id: 1, x: -10, z: -10, title: "Day 1",
+    text: "Do you remember when we first started talking? I knew then you were special.",
+    image: "https://images.unsplash.com/photo-1518621736915-f3b1c41bfd00?q=80&w=300"
   },
   { id: 2, x: 10, z: -8, title: "The Park", text: "Our first awkward walk. I wanted to hold your hand so bad!", image: "" },
   { id: 3, x: -12, z: 8, title: "Your Birthday", text: "Seeing you smile at the gazebo was the highlight of my year.", image: "" },
@@ -23,5 +23,5 @@ export const MEMORIES: Memory[] = [
   { id: 5, x: 0, z: -18, title: "Inside Joke", text: "Wait... are we still doing that silly voice? Haha!", image: "" },
   { id: 6, x: 15, z: 15, title: "The Sunset", text: "100 Days felt like magic. But 400 feels like destiny.", image: "" },
   { id: 7, x: -15, z: 12, title: "Trust", text: "We've built a bridge of trust that nothing can break.", image: "" },
-  { id: 8, x: 0, z: 0, title: "400 Days", text: "Stand here together...", image: "", isFinal: true } 
+  { id: 8, x: 0, z: 0, title: "400 Days", text: "Stand here together...", image: "", isFinal: true }
 ];
