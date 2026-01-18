@@ -189,8 +189,6 @@ const Scene3D: React.FC<Scene3DProps> = ({
         renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
         renderer.shadowMap.enabled = true;
         renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-        renderer.toneMapping = THREE.ACESFilmicToneMapping; // Minecraft-like color grading
-        renderer.toneMappingExposure = 1.2; // Brighter, more vibrant
         mountRef.current.appendChild(renderer.domElement);
 
         // --- WARMER LIGHTING ---
@@ -206,15 +204,14 @@ const Scene3D: React.FC<Scene3DProps> = ({
         scene.add(dirLight);
         sunRef.current = dirLight;
 
-        // --- SHADER-QUALITY WATER ---
+        // --- WATER ---
         const waterGeo = new THREE.CylinderGeometry(WORLD_RADIUS + 80, WORLD_RADIUS + 80, 5, 64);
         const waterMat = new THREE.MeshStandardMaterial({
             color: 0x4dabf7,
             transparent: true,
-            opacity: 0.85,
-            roughness: 0.05,  // Very smooth for reflections
-            metalness: 0.9,   // High metalness for realistic water
-            envMapIntensity: 2.0  // Enhanced reflections
+            opacity: 0.8,
+            roughness: 0.1,
+            metalness: 0.5
         });
         const water = new THREE.Mesh(waterGeo, waterMat);
         water.position.y = -3.5;
@@ -468,6 +465,11 @@ const Scene3D: React.FC<Scene3DProps> = ({
             const island = new THREE.Mesh(new THREE.CylinderGeometry(WORLD_RADIUS, WORLD_RADIUS - 8, 5, 48), new THREE.MeshStandardMaterial({ color: COLORS.grass, flatShading: true }));
             island.position.y = -2.5; island.receiveShadow = true; worldGroup.add(island);
 
+            // --- LAKE ---
+            const lake = new THREE.Mesh(new THREE.CylinderGeometry(15, 15, 0.5, 32), new THREE.MeshStandardMaterial({ color: COLORS.water, roughness: 0.1, metalness: 0.2 }));
+            lake.position.set(0, 0.05, -10); // Offset from castle
+            worldGroup.add(lake);
+
             // --- HILLS ---
             const hillGeo = new THREE.SphereGeometry(15, 16, 8, 0, Math.PI * 2, 0, Math.PI / 2.5);
             const hillMat = new THREE.MeshStandardMaterial({ color: 0x7bc043, flatShading: true });
@@ -489,184 +491,65 @@ const Scene3D: React.FC<Scene3DProps> = ({
             mtn.position.set(-50, 0, 10);
             worldGroup.add(mtn);
 
-            // --- REALISTIC PALM TREES (3D Geometry) ---
-            const createPalmTree = (x: number, z: number, scale = 1) => {
-                const tree = new THREE.Group();
-                tree.position.set(x, 0, z);
-
-                // --- TRUNK ---
-                const trunkMat = new THREE.MeshStandardMaterial({
-                    color: 0x8B5A2B, // Richer brown
-                    roughness: 0.9,
-                    flatShading: true
-                });
-
-                // Base
-                const base = new THREE.Mesh(new THREE.CylinderGeometry(0.5 * scale, 0.6 * scale, 1.5 * scale, 7), trunkMat);
-                base.position.y = 0.75 * scale;
-                base.castShadow = true;
-                tree.add(base);
-
-                // Curved segments
-                let currentY = 1.5 * scale;
-                let currentX = 0;
-                const curveAngle = (Math.random() - 0.5) * 0.2; // Random slight lean
-
-                for (let i = 0; i < 4; i++) {
-                    const h = 1.2 * scale;
-                    const topR = 0.45 * scale * (1 - i * 0.08);
-                    const botR = 0.5 * scale * (1 - i * 0.08);
-
-                    const seg = new THREE.Mesh(new THREE.CylinderGeometry(topR, botR, h, 7), trunkMat);
-                    seg.position.set(currentX, currentY + h / 2, 0);
-                    seg.rotation.z = i * curveAngle;
-                    seg.castShadow = true;
-                    tree.add(seg);
-
-                    currentY += h * Math.cos(i * curveAngle);
-                    currentX -= h * Math.sin(i * curveAngle);
-                }
-
-                // --- FRONDS (3D Arches) ---
-                const frondMat = new THREE.MeshStandardMaterial({
-                    color: 0x2E8B57, // SeaGreen
-                    roughness: 0.8,
-                    flatShading: true,
-                    side: THREE.DoubleSide
-                });
-
-                const createFrond = (yRot: number) => {
-                    const frondGroup = new THREE.Group();
-                    frondGroup.rotation.y = yRot;
-                    frondGroup.position.set(currentX, currentY - 0.2 * scale, 0); // Attach to top
-
-                    // Make frond out of 5 segments to form an arch
-                    for (let j = 0; j < 5; j++) {
-                        const len = 1.0 * scale;
-                        const width = (0.6 - j * 0.1) * scale;
-                        const thick = 0.05 * scale;
-
-                        const part = new THREE.Mesh(new THREE.BoxGeometry(width, thick, len), frondMat);
-
-                        // Initial position relative to start of frond
-                        const zPos = j * len * 0.9;
-                        const yPos = Math.sin(j * 0.5) * 0.5 * scale; // Arch up
-
-                        part.position.set(0, yPos, zPos + len / 2);
-                        part.rotation.x = j * 0.3; // Curve down
-                        part.castShadow = true;
-                        frondGroup.add(part);
-                    }
-                    return frondGroup;
-                };
-
-                // Add 7 fronds around
-                for (let k = 0; k < 7; k++) {
-                    tree.add(createFrond(k * (Math.PI * 2 / 7)));
-                }
-
-                // Coconuts!
-                const cocoMat = new THREE.MeshStandardMaterial({ color: 0x4B3621 });
-                for (let c = 0; c < 3; c++) {
-                    const coco = new THREE.Mesh(new THREE.SphereGeometry(0.25 * scale, 6, 6), cocoMat);
-                    const angle = c * (Math.PI * 2 / 3);
-                    coco.position.set(
-                        currentX + Math.cos(angle) * 0.4 * scale,
-                        currentY - 0.2 * scale,
-                        Math.sin(angle) * 0.4 * scale
-                    );
-                    tree.add(coco);
-                }
-
-                return tree;
-            };
-
-            // Place palm trees around island
-            const palmPositions = [
-                [-20, -15], [-25, -10], [-18, -20],
-                [20, -15], [25, -10], [18, -20],
-                [-15, 15], [-20, 20], [-12, 18],
-                [15, 15], [20, 20], [12, 18],
-                [0, -25], [-8, -28], [8, -28],
-                [28, 5], [-28, 5], [5, 28], [-5, 28]
-            ];
-
-            palmPositions.forEach(([x, z]) => {
-                const scale = 0.9 + Math.random() * 0.3;
-                worldGroup.add(createPalmTree(x, z, scale));
+            // --- BENCHES ---
+            const benchMat = new THREE.MeshStandardMaterial({ color: 0x5D4037 });
+            const benchCoords = [[10, 10], [-15, 15], [0, -28]];
+            benchCoords.forEach(([bx, bz], idx) => {
+                const bench = new THREE.Group();
+                const seat = new THREE.Mesh(new THREE.BoxGeometry(4, 0.5, 1.5), benchMat); seat.position.y = 1;
+                const lLeg = new THREE.Mesh(new THREE.BoxGeometry(0.5, 1, 1.5), benchMat); lLeg.position.set(-1.5, 0.5, 0);
+                const rLeg = new THREE.Mesh(new THREE.BoxGeometry(0.5, 1, 1.5), benchMat); rLeg.position.set(1.5, 0.5, 0);
+                const back = new THREE.Mesh(new THREE.BoxGeometry(4, 1.5, 0.2), benchMat); back.position.set(0, 2, -0.6);
+                bench.add(seat, lLeg, rLeg, back);
+                bench.position.set(bx, 0, bz);
+                // Face centerish
+                bench.lookAt(0, 0, 0);
+                bench.userData = { isBench: true, id: idx };
+                worldGroup.add(bench);
             });
 
-            // --- PICNIC BLANKET (For Two) 🧺 ---
-            const blanket = new THREE.Mesh(
-                new THREE.PlaneGeometry(3, 3),
-                new THREE.MeshStandardMaterial({ color: 0xffaebc, side: THREE.DoubleSide }) // Pinkish blanket
-            );
-            blanket.rotation.x = -Math.PI / 2;
-            blanket.position.set(5, 0.05, 5); // Near center but not 0,0
-            blanket.receiveShadow = true;
-            blanket.userData = { isBlanket: true }; // Clickable
-            worldGroup.add(blanket);
+            // --- CASTLE ---
+            const castleGroup = new THREE.Group();
+            const wallMat = new THREE.MeshStandardMaterial({ color: 0xffffff, side: THREE.DoubleSide });
+            const roofMat = new THREE.MeshStandardMaterial({ color: 0xffaebc });
 
-            // Picnic Basket
-            const basket = new THREE.Group();
-            const basketBody = new THREE.Mesh(new THREE.BoxGeometry(0.8, 0.5, 0.5), new THREE.MeshStandardMaterial({ color: 0x8B4513 }));
-            basketBody.position.y = 0.25;
-            basket.add(basketBody);
-            basket.position.set(6, 0, 6);
-            worldGroup.add(basket);
-
-            // --- MEMORY BOARDS (Keep for your special memories!) ---
-            MEMORIES.forEach(mem => {
-                const board = new THREE.Group();
-                const pole = new THREE.Mesh(
-                    new THREE.CylinderGeometry(0.1, 0.1, 3),
-                    new THREE.MeshStandardMaterial({ color: 0x8B4513 })
-                );
-                pole.position.y = 1.5;
-                pole.castShadow = true;
-                board.add(pole);
-
-                const sign = new THREE.Mesh(
-                    new THREE.BoxGeometry(2, 1.5, 0.2),
-                    new THREE.MeshStandardMaterial({ color: 0xffb7b2 })
-                );
-                sign.position.y = 3.2;
-                sign.castShadow = true;
-                board.add(sign);
-
-                board.position.set(mem.x, 0, mem.z);
-                board.userData = { isMemory: true, memoryId: mem.id };
-                worldGroup.add(board);
+            const floor = new THREE.Mesh(new THREE.PlaneGeometry(12, 12), new THREE.MeshStandardMaterial({ color: 0xf0f0f0 }));
+            floor.rotation.x = -Math.PI / 2; floor.position.y = 0.05; castleGroup.add(floor);
+            const backWall = new THREE.Mesh(new THREE.PlaneGeometry(12, 8), wallMat);
+            backWall.position.set(0, 4, -6); castleGroup.add(backWall);
+            const leftWall = new THREE.Mesh(new THREE.PlaneGeometry(12, 8), wallMat);
+            leftWall.position.set(-6, 4, 0); leftWall.rotation.y = Math.PI / 2; castleGroup.add(leftWall);
+            const rightWall = new THREE.Mesh(new THREE.PlaneGeometry(12, 8), wallMat);
+            rightWall.position.set(6, 4, 0); rightWall.rotation.y = -Math.PI / 2; castleGroup.add(rightWall);
+            const frontLeft = new THREE.Mesh(new THREE.PlaneGeometry(4.5, 8), wallMat);
+            frontLeft.position.set(-3.75, 4, 6); frontLeft.rotation.y = Math.PI; castleGroup.add(frontLeft);
+            const frontRight = new THREE.Mesh(new THREE.PlaneGeometry(4.5, 8), wallMat);
+            frontRight.position.set(3.75, 4, 6); frontRight.rotation.y = Math.PI; castleGroup.add(frontRight);
+            const frontTop = new THREE.Mesh(new THREE.PlaneGeometry(3, 3), wallMat);
+            frontTop.position.set(0, 6.5, 6); frontTop.rotation.y = Math.PI; castleGroup.add(frontTop);
+            const mainRoof = new THREE.Mesh(new THREE.ConeGeometry(10, 5, 4), roofMat);
+            mainRoof.position.y = 10.5; mainRoof.rotation.y = Math.PI / 4; castleGroup.add(mainRoof);
+            const towerGeo = new THREE.CylinderGeometry(1.5, 1.5, 10);
+            const roofGeo = new THREE.ConeGeometry(2, 3, 4);
+            [[-6, -6], [6, -6], [-6, 6], [6, 6]].forEach(([tx, tz]) => {
+                const tower = new THREE.Mesh(towerGeo, wallMat);
+                tower.position.set(tx, 5, tz); tower.castShadow = true; castleGroup.add(tower);
+                const roof = new THREE.Mesh(roofGeo, roofMat);
+                roof.position.set(tx, 11.5, tz); roof.rotation.y = Math.PI / 4; castleGroup.add(roof);
             });
 
-            // --- STOVE (Keep for burger game!) ---
+            // STOVE
             const stove = new THREE.Group();
-            const stoveBody = new THREE.Mesh(
-                new THREE.BoxGeometry(2, 2, 2),
-                new THREE.MeshStandardMaterial({ color: 0x333333 })
-            );
-            stoveBody.position.y = 1;
-            stoveBody.castShadow = true;
-            stove.add(stoveBody);
+            const stoveBody = new THREE.Mesh(new THREE.BoxGeometry(2, 2, 2), new THREE.MeshStandardMaterial({ color: 0x333333 }));
+            stoveBody.position.y = 1; stove.add(stoveBody);
+            const burner = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.3, 0.1), new THREE.MeshStandardMaterial({ color: 0xff0000 }));
+            burner.position.set(-0.5, 2.05, 0.5); stove.add(burner);
+            const pan = new THREE.Mesh(new THREE.CylinderGeometry(0.4, 0.3, 0.2), new THREE.MeshStandardMaterial({ color: 0x555555 }));
+            pan.position.set(-0.5, 2.15, 0.5); stove.add(pan);
+            stove.position.set(-4, 0, -4); stove.userData = { isStove: true };
+            castleGroup.add(stove);
 
-            const burner = new THREE.Mesh(
-                new THREE.CylinderGeometry(0.3, 0.3, 0.1),
-                new THREE.MeshStandardMaterial({ color: 0xff0000, emissive: 0xff0000, emissiveIntensity: 0.5 })
-            );
-            burner.position.set(-0.5, 2.05, 0.5);
-            stove.add(burner);
-
-            const pan = new THREE.Mesh(
-                new THREE.CylinderGeometry(0.4, 0.3, 0.2),
-                new THREE.MeshStandardMaterial({ color: 0x555555, metalness: 0.8 })
-            );
-            pan.position.set(-0.5, 2.15, 0.5);
-            pan.castShadow = true;
-            stove.add(pan);
-
-            stove.position.set(-8, 0, 28);
-            stove.userData = { isStove: true };
-            worldGroup.add(stove);
+            castleGroup.position.set(0, 0, 35); castleGroup.scale.setScalar(1.5); worldGroup.add(castleGroup);
 
             // --- PLANE ---
             const planeGroup = new THREE.Group();
@@ -876,71 +759,11 @@ const Scene3D: React.FC<Scene3DProps> = ({
         };
 
         // --- LOOP ---
-        // Floating Hearts System
-        const heartsRef = useRef<{ mesh: THREE.Mesh, speed: number }[]>([]);
-
-        // Create Heart Texture/Geometry once
-        const heartShape = new THREE.Shape();
-        heartShape.moveTo(0.25, 0.25);
-        heartShape.bezierCurveTo(0.25, 0.25, 0.20, 0, 0, 0);
-        heartShape.bezierCurveTo(-0.30, 0, -0.30, 0.35, -0.30, 0.35);
-        heartShape.bezierCurveTo(-0.30, 0.55, -0.10, 0.77, 0.25, 0.95);
-        heartShape.bezierCurveTo(0.60, 0.77, 0.80, 0.55, 0.80, 0.35);
-        heartShape.bezierCurveTo(0.80, 0.35, 0.80, 0, 0.50, 0);
-        heartShape.bezierCurveTo(0.35, 0, 0.25, 0.25, 0.25, 0.25);
-        const heartGeo = new THREE.ShapeGeometry(heartShape);
-        const heartMat = new THREE.MeshBasicMaterial({ color: 0xff69b4, side: THREE.DoubleSide });
-
-        // Function to spawn a heart
-        const spawnHeart = (x: number, y: number, z: number) => {
-            if (heartsRef.current.length > 20) return; // Limit limit
-            const heart = new THREE.Mesh(heartGeo, heartMat);
-            const scale = 0.2 + Math.random() * 0.2;
-            heart.scale.set(scale, -scale, scale); // Flip Y because shape is drawn upside down-ish
-            heart.rotation.z = Math.PI; // Flip right side up
-            heart.position.set(x, y, z);
-            sceneRef.current?.add(heart);
-            heartsRef.current.push({ mesh: heart, speed: 0.05 + Math.random() * 0.05 });
-        };
-
         const animate = () => {
             animationId = requestAnimationFrame(animate);
             const rawDelta = clock.getDelta();
             const delta = Math.min(rawDelta, 0.1);
             const time = clock.getElapsedTime();
-
-            // Animate Hearts
-            for (let i = heartsRef.current.length - 1; i >= 0; i--) {
-                const h = heartsRef.current[i];
-                h.mesh.position.y += h.speed;
-                //h.mesh.material.opacity = Math.max(0, 1 - (h.mesh.position.y - 2) / 3); 
-                if (h.mesh.position.y > 6 + h.mesh.position.y) { // Simple cull
-                    sceneRef.current?.remove(h.mesh);
-                    heartsRef.current.splice(i, 1);
-                } else if (h.mesh.position.y > 10) {
-                    sceneRef.current?.remove(h.mesh);
-                    heartsRef.current.splice(i, 1);
-                }
-            }
-
-            // Proximity Check
-            if (myMeshRef.current && Object.keys(playersDataRef.current).length > 0) {
-                Object.values(playersDataRef.current).forEach((p: any) => {
-                    if (playersMeshesRef.current[p.id]) {
-                        const dist = myMeshRef.current!.position.distanceTo(playersMeshesRef.current[p.id].position);
-                        if (dist < 3) {
-                            // Spawn hearts randomly
-                            if (Math.random() < 0.02) {
-                                spawnHeart(
-                                    myMeshRef.current!.position.x + (Math.random() - 0.5),
-                                    myMeshRef.current!.position.y + 2,
-                                    myMeshRef.current!.position.z + (Math.random() - 0.5)
-                                );
-                            }
-                        }
-                    }
-                });
-            }
 
             const inputs = inputRef.current;
             const otherPlayers = playersDataRef.current;

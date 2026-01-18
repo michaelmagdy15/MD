@@ -3,7 +3,8 @@ import LoginScreen from './components/LoginScreen';
 import Scene3D from './components/Scene3D';
 import GameUI from './components/GameUI';
 import { JoystickData, GameState, PlayerData, ChatMessage, TicTacToeState } from './types';
-import { auth, db, APP_ID_KEY, firebase } from './services/firebase';
+import { supabase } from './services/supabase';
+import { RealtimeChannel } from '@supabase/supabase-js';
 
 const App: React.FC = () => {
   const [gameState, setGameState] = useState<GameState>({
@@ -20,7 +21,6 @@ const App: React.FC = () => {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [activeMemoryId, setActiveMemoryId] = useState<number | null>(null);
   const [xoState, setXoState] = useState<TicTacToeState>({ board: Array(9).fill(null), isXNext: true, winner: null });
-  const [loginTime, setLoginTime] = useState<number>(0);
   const [localEmote, setLocalEmote] = useState<{ name: string, time: number } | null>(null);
   const [sprinting, setSprinting] = useState(false);
 
@@ -36,7 +36,8 @@ const App: React.FC = () => {
   const [isSitting, setIsSitting] = useState(false);
 
   const audioRef = useRef<HTMLAudioElement | null>(null);
-  const userRef = useRef<firebase.User | null>(null);
+  const myIdRef = useRef<string>(Math.random().toString(36).substring(7));
+  const channelRef = useRef<RealtimeChannel | null>(null);
 
   // Keyboard controls
   useEffect(() => {
@@ -70,81 +71,111 @@ const App: React.FC = () => {
     };
   }, [input, isSitting]);
 
-  // Clean up player on unmount
+  // Clean up
   useEffect(() => {
-    const cleanup = async () => {
-      if (userRef.current && gameState.roomId) {
-        try {
-          await db.collection('artifacts').doc(APP_ID_KEY)
-            .collection('public').doc('data')
-            .collection('mdworld_rooms').doc(gameState.roomId)
-            .collection('players').doc(userRef.current.uid).delete();
-        } catch (e) { console.error("Cleanup error", e); }
-      }
-    };
-
-    window.addEventListener('beforeunload', cleanup);
     return () => {
-      cleanup();
-      window.removeEventListener('beforeunload', cleanup);
+      if (channelRef.current) supabase.removeChannel(channelRef.current);
     };
-  }, [gameState.roomId]);
-
-  // Subscribe to Burger Count
-  useEffect(() => {
-    if (!gameState.roomId) return;
-    const unsub = db.collection('artifacts').doc(APP_ID_KEY)
-      .collection('public').doc('data')
-      .collection('mdworld_rooms').doc(gameState.roomId)
-      .collection('kitchen').doc('status')
-      .onSnapshot(doc => {
-        if (doc.exists) {
-          setBurgerCount(doc.data()?.burgers || 0);
-        }
-      });
-    return () => unsub();
-  }, [gameState.roomId]);
+  }, []);
 
   const handleJoin = async (char: 'michael' | 'douri', room: string) => {
     setLoading(true);
     try {
-      const userCred = await auth.signInAnonymously();
-      userRef.current = userCred.user;
+      const roomId = room.toUpperCase();
+      setGameState({
+        joined: true,
+        roomId: roomId,
+        character: char,
+        playersCount: 1
+      });
 
-      if (userRef.current) {
-        setLoginTime(Date.now());
-        setGameState({
-          joined: true,
-          roomId: room,
-          character: char,
-          playersCount: 1
+      // 1. Join Realtime Channel for Presence (Movement)
+      const channel = supabase.channel(`room:${roomId}`, {
+        config: { presence: { key: myIdRef.current } }
+      });
+
+      channel
+        .on('presence', { event: 'sync' }, () => {
+          const state = channel.presenceState();
+          const newPlayers: Record<string, PlayerData> = {};
+          Object.keys(state).forEach(key => {
+            if (key !== myIdRef.current) {
+              const p = state[key][0] as any;
+              newPlayers[key] = p;
+            }
+          });
+          setPlayers(newPlayers);
+          setGameState(prev => ({ ...prev, playersCount: Object.keys(newPlayers).length + 1 }));
+        })
+        .subscribe(async (status) => {
+          if (status === 'SUBSCRIBED') {
+            await channel.track({
+              x: Math.random() * 4 - 2,
+              y: 0,
+              z: 15,
+              rot: 0,
+              type: char,
+              moving: false
+            });
+          }
         });
 
-        // Clear chat UI state on join
-        setMessages([]);
+      channelRef.current = channel;
 
-        subscribeToRoom(room);
-        subscribeToChat(room);
-        subscribeToXO(room);
+      // 2. Fetch & Subscribe to Chat
+      const { data: existingMsgs } = await supabase
+        .from('chat_messages')
+        .select('*')
+        .eq('room_id', roomId)
+        .order('created_at', { ascending: false })
+        .limit(50);
+
+      if (existingMsgs) setMessages(existingMsgs.reverse());
+
+      supabase
+        .channel(`chat:${roomId}`)
+        .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'chat_messages', filter: `room_id=eq.${roomId}` }, (payload) => {
+          setMessages(prev => [...prev.slice(-49), payload.new as ChatMessage]);
+        })
+        .subscribe();
+
+      // 3. Game State (XO & Burgers)
+      const { data: dbState } = await supabase
+        .from('game_states')
+        .select('*')
+        .eq('room_id', roomId)
+        .single();
+
+      if (dbState) {
+        if (dbState.board) setXoState(prev => ({ ...prev, board: dbState.board, isXNext: dbState.is_x_next, winner: dbState.winner }));
+        if (dbState.burger_count) setBurgerCount(dbState.burger_count);
+      } else {
+        // Init room if not exists
+        await supabase.from('game_states').insert({ room_id: roomId });
       }
+
+      supabase
+        .channel(`gamestate:${roomId}`)
+        .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'game_states', filter: `room_id=eq.${roomId}` }, (payload) => {
+          const newState = payload.new;
+          if (newState.board) setXoState({ board: newState.board, isXNext: newState.is_x_next, winner: newState.winner });
+          if (newState.burger_count !== undefined) setBurgerCount(newState.burger_count);
+        })
+        .subscribe();
+
     } catch (error) {
       console.error("Login failed", error);
-      alert("Could not connect to Firebase. Check console.");
+      alert("Could not connect to Supabase. Check console.");
     } finally {
       setLoading(false);
     }
   };
 
   const handleLeave = async () => {
-    if (userRef.current && gameState.roomId) {
-      try {
-        await db.collection('artifacts').doc(APP_ID_KEY)
-          .collection('public').doc('data')
-          .collection('mdworld_rooms').doc(gameState.roomId)
-          .collection('players').doc(userRef.current.uid).delete();
-      } catch (e) { console.error(e); }
+    if (channelRef.current) {
+      await channelRef.current.untrack();
+      supabase.removeChannel(channelRef.current);
     }
-    auth.signOut();
     setGameState({ joined: false, roomId: '', character: 'michael', playersCount: 0 });
     setPlayers({});
     setMessages([]);
@@ -154,179 +185,86 @@ const App: React.FC = () => {
     setIsSitting(false);
   };
 
-  const subscribeToRoom = (roomId: string) => {
-    const roomRef = db.collection('artifacts').doc(APP_ID_KEY)
-      .collection('public').doc('data')
-      .collection('mdworld_rooms').doc(roomId)
-      .collection('players');
-
-    roomRef.onSnapshot(snapshot => {
-      const now = Date.now();
-      const newPlayers: Record<string, PlayerData> = {};
-
-      snapshot.forEach(doc => {
-        if (doc.id !== userRef.current?.uid) {
-          const data = doc.data() as PlayerData;
-          let lastSeen = 0;
-          if (data.timestamp?.toMillis) lastSeen = data.timestamp.toMillis();
-          else if (data.timestamp) lastSeen = new Date(data.timestamp).getTime();
-
-          if (now - lastSeen < 60000) {
-            newPlayers[doc.id] = data;
-          }
-        }
-      });
-      setPlayers(newPlayers);
-      setGameState(prev => ({ ...prev, playersCount: Object.keys(newPlayers).length + 1 }));
-    });
-  };
-
-  const subscribeToChat = (roomId: string) => {
-    const chatRef = db.collection('artifacts').doc(APP_ID_KEY)
-      .collection('public').doc('data')
-      .collection('mdworld_rooms').doc(roomId)
-      .collection('chat')
-      .orderBy('timestamp', 'desc')
-      .limit(50);
-
-    chatRef.onSnapshot(snapshot => {
-      const msgs: ChatMessage[] = [];
-      snapshot.forEach(doc => {
-        const data = doc.data();
-        let msgTime = 0;
-        if (data.timestamp && data.timestamp.toMillis) msgTime = data.timestamp.toMillis();
-        else if (data.timestamp) msgTime = new Date(data.timestamp).getTime();
-
-        if (msgTime > (loginTime - 2000)) {
-          msgs.push({ id: doc.id, ...data } as ChatMessage);
-        }
-      });
-      setMessages(msgs.reverse());
-    });
-  };
-
-  const subscribeToXO = (roomId: string) => {
-    const xoRef = db.collection('artifacts').doc(APP_ID_KEY)
-      .collection('public').doc('data')
-      .collection('mdworld_rooms').doc(roomId)
-      .collection('tictactoe').doc('game');
-
-    xoRef.onSnapshot(doc => {
-      if (doc.exists) {
-        const data = doc.data() as TicTacToeState;
-        setXoState(data);
-      }
-    });
-  };
-
-  const handleXOAction = (index: number | null) => {
+  const handleXOAction = async (index: number | null) => {
     if (!gameState.roomId) return;
-    const xoRef = db.collection('artifacts').doc(APP_ID_KEY)
-      .collection('public').doc('data')
-      .collection('mdworld_rooms').doc(gameState.roomId)
-      .collection('tictactoe').doc('game');
+
+    let newState: Partial<TicTacToeState> = {};
 
     if (index === null) {
-      xoRef.set({ board: Array(9).fill(null), isXNext: true, winner: null });
-      return;
-    }
+      newState = { board: Array(9).fill(null), isXNext: true, winner: null };
+    } else {
+      if (xoState.board[index] || xoState.winner) return;
+      const newBoard = [...xoState.board];
+      newBoard[index] = xoState.isXNext ? 'X' : 'O';
 
-    if (xoState.board[index] || xoState.winner) return;
-
-    const newBoard = [...xoState.board];
-    newBoard[index] = xoState.isXNext ? 'X' : 'O';
-
-    let winner = null;
-    const lines = [[0, 1, 2], [3, 4, 5], [6, 7, 8], [0, 3, 6], [1, 4, 7], [2, 5, 8], [0, 4, 8], [2, 4, 6]];
-    for (let i = 0; i < lines.length; i++) {
-      const [a, b, c] = lines[i];
-      if (newBoard[a] && newBoard[a] === newBoard[b] && newBoard[a] === newBoard[c]) {
-        winner = newBoard[a];
+      let winner = null;
+      const lines = [[0, 1, 2], [3, 4, 5], [6, 7, 8], [0, 3, 6], [1, 4, 7], [2, 5, 8], [0, 4, 8], [2, 4, 6]];
+      for (let i = 0; i < lines.length; i++) {
+        const [a, b, c] = lines[i];
+        if (newBoard[a] && newBoard[a] === newBoard[b] && newBoard[a] === newBoard[c]) {
+          winner = newBoard[a];
+        }
       }
-    }
-    if (!winner && newBoard.every(c => c)) winner = 'Draw';
+      if (!winner && newBoard.every(c => c)) winner = 'Draw';
 
-    xoRef.set({
-      board: newBoard,
-      isXNext: !xoState.isXNext,
-      winner
-    });
+      newState = {
+        board: newBoard,
+        isXNext: !xoState.isXNext,
+        winner
+      };
+    }
+
+    await supabase.from('game_states').update({
+      board: newState.board,
+      is_x_next: newState.isXNext,
+      winner: newState.winner,
+      updated_at: new Date().toISOString()
+    }).eq('room_id', gameState.roomId);
   };
 
   const updatePosition = (x: number, y: number, z: number, rot: number, moving: boolean) => {
-    if (!userRef.current || !gameState.roomId) return;
+    if (!channelRef.current) return;
 
-    db.collection('artifacts').doc(APP_ID_KEY)
-      .collection('public').doc('data')
-      .collection('mdworld_rooms').doc(gameState.roomId)
-      .collection('players').doc(userRef.current.uid)
-      .set({
-        x, y, z, rot,
-        moving,
-        type: gameState.character,
-        id: userRef.current.uid,
-        timestamp: firebase.firestore.FieldValue.serverTimestamp(),
-        ...(localEmote && (Date.now() - localEmote.time < 3000) ? { emote: localEmote } : {})
-      }, { merge: true });
+    channelRef.current.track({
+      x, y, z, rot, moving,
+      type: gameState.character,
+      id: myIdRef.current,
+      timestamp: Date.now(),
+      ...(localEmote && (Date.now() - localEmote.time < 3000) ? { emote: localEmote } : {})
+    });
   };
 
   const handleEmote = (name: string) => {
     const emoteData = { name, time: Date.now() };
     setLocalEmote(emoteData);
-
-    if (!userRef.current || !gameState.roomId) return;
-    db.collection('artifacts').doc(APP_ID_KEY)
-      .collection('public').doc('data')
-      .collection('mdworld_rooms').doc(gameState.roomId)
-      .collection('players').doc(userRef.current.uid)
-      .set({
-        emote: emoteData
-      }, { merge: true });
   };
 
-  const sendMessage = (text: string) => {
-    if (!userRef.current || !gameState.roomId) return;
-    const name = gameState.character === 'michael' ? 'Michael' : 'Douri';
-    db.collection('artifacts').doc(APP_ID_KEY)
-      .collection('public').doc('data')
-      .collection('mdworld_rooms').doc(gameState.roomId)
-      .collection('chat').add({
-        name, text,
-        timestamp: firebase.firestore.FieldValue.serverTimestamp()
-      });
-  };
-
-  const handleCook = () => {
+  const sendMessage = async (text: string) => {
     if (!gameState.roomId) return;
-    const ref = db.collection('artifacts').doc(APP_ID_KEY)
-      .collection('public').doc('data')
-      .collection('mdworld_rooms').doc(gameState.roomId)
-      .collection('kitchen').doc('status');
-
-    // Simple atomic increment via transaction
-    db.runTransaction(async t => {
-      const doc = await t.get(ref);
-      const newCount = (doc.data()?.burgers || 0) + 1;
-      t.set(ref, { burgers: newCount }, { merge: true });
+    const name = gameState.character === 'michael' ? 'Michael' : 'Douri';
+    await supabase.from('chat_messages').insert({
+      room_id: gameState.roomId,
+      user_name: name,
+      message: text
     });
+  };
+
+  const handleCook = async () => {
+    if (!gameState.roomId) return;
+    const newCount = burgerCount + 1;
+    await supabase.from('game_states').update({ burger_count: newCount }).eq('room_id', gameState.roomId);
   };
 
   const handleEnterTreehouse = () => {
     setTeleportReq({ x: 40, y: 10, z: 20, id: Date.now() });
-    updatePosition(40, 10, 20, 0, false);
   };
 
   const handleToggleSit = () => {
     if (isSitting) {
       setIsSitting(false);
-      // Teleport slightly forward to avoid clipping when standing up
-      // We can't easily read current pos here without state loop, so we assume player just moves
     } else if (isNearBench) {
       setIsSitting(true);
-      // Lock input
       setInput({ x: 0, y: 0 });
-      // Note: In a full engine we'd snap to bench position (x, y, z).
-      // Here scene3D handles visual snap, we just freeze input
     }
   };
 
@@ -381,7 +319,7 @@ const App: React.FC = () => {
         xoState={xoState}
         onXOAction={handleXOAction}
         players={players}
-        myId={userRef.current?.uid}
+        myId={myIdRef.current}
         onLeave={handleLeave}
         isNearStove={isNearStove}
         burgerCount={burgerCount}
