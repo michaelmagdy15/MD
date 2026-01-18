@@ -67,6 +67,8 @@ const Scene3D: React.FC<Scene3DProps> = ({
 
     // Pinch Zoom Refs
     const touchDistRef = useRef<number | null>(null);
+    const heartsRef = useRef<{ mesh: THREE.Mesh; speed: number }[]>([]);
+    const heartAssetsRef = useRef<{ geo: THREE.ShapeGeometry; mat: THREE.MeshBasicMaterial } | null>(null);
 
     // Sync refs
     useEffect(() => { inputRef.current = input; }, [input]);
@@ -902,20 +904,22 @@ const Scene3D: React.FC<Scene3DProps> = ({
         };
 
         // --- LOOP ---
-        // Floating Hearts System
-        const heartsRef = useRef<{ mesh: THREE.Mesh, speed: number }[]>([]);
-
-        // Create Heart Texture/Geometry once
-        const heartShape = new THREE.Shape();
-        heartShape.moveTo(0.25, 0.25);
-        heartShape.bezierCurveTo(0.25, 0.25, 0.20, 0, 0, 0);
-        heartShape.bezierCurveTo(-0.30, 0, -0.30, 0.35, -0.30, 0.35);
-        heartShape.bezierCurveTo(-0.30, 0.55, -0.10, 0.77, 0.25, 0.95);
-        heartShape.bezierCurveTo(0.60, 0.77, 0.80, 0.55, 0.80, 0.35);
-        heartShape.bezierCurveTo(0.80, 0.35, 0.80, 0, 0.50, 0);
-        heartShape.bezierCurveTo(0.35, 0, 0.25, 0.25, 0.25, 0.25);
-        const heartGeo = new THREE.ShapeGeometry(heartShape);
-        const heartMat = new THREE.MeshBasicMaterial({ color: 0xff69b4, side: THREE.DoubleSide });
+        // Create Heart Assets once
+        if (!heartAssetsRef.current) {
+            const heartShape = new THREE.Shape();
+            heartShape.moveTo(0.25, 0.25);
+            heartShape.bezierCurveTo(0.25, 0.25, 0.20, 0, 0, 0);
+            heartShape.bezierCurveTo(-0.30, 0, -0.30, 0.35, -0.30, 0.35);
+            heartShape.bezierCurveTo(-0.30, 0.55, -0.10, 0.77, 0.25, 0.95);
+            heartShape.bezierCurveTo(0.60, 0.77, 0.80, 0.55, 0.80, 0.35);
+            heartShape.bezierCurveTo(0.80, 0.35, 0.80, 0, 0.50, 0);
+            heartShape.bezierCurveTo(0.35, 0, 0.25, 0.25, 0.25, 0.25);
+            heartAssetsRef.current = {
+                geo: new THREE.ShapeGeometry(heartShape),
+                mat: new THREE.MeshBasicMaterial({ color: 0xff69b4, side: THREE.DoubleSide })
+            };
+        }
+        const { geo: heartGeo, mat: heartMat } = heartAssetsRef.current;
 
         // Function to spawn a heart
         const spawnHeart = (x: number, y: number, z: number) => {
