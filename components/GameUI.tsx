@@ -270,8 +270,8 @@ const GameUI: React.FC<GameUIProps> = ({
           <div className="bg-black/40 backdrop-blur-md rounded-2xl p-3 h-48 overflow-y-auto mb-2 flex flex-col">
             {messages.map((msg, idx) => (
               <div key={idx} className="mb-1 text-sm text-white drop-shadow-md">
-                <span className="font-bold text-[#ffb7b2] mr-1">{msg.name}:</span>
-                {msg.text}
+                <span className="font-bold text-[#ffb7b2] mr-1">{msg.user_name}:</span>
+                <span className="break-words">{msg.message}</span>
               </div>
             ))}
             <div ref={chatEndRef} />

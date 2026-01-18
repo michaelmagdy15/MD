@@ -17,9 +17,9 @@ export interface PlayerData {
 
 export interface ChatMessage {
   id?: string;
-  name: string;
-  text: string;
-  timestamp: any;
+  user_name: string; // Changed from name to match DB
+  message: string;   // Changed from text to match DB
+  created_at?: string;
 }
 
 export interface Memory {
