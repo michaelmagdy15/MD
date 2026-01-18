@@ -206,6 +206,32 @@ const Scene3D: React.FC<Scene3DProps> = ({
         scene.add(dirLight);
         sunRef.current = dirLight;
 
+        // --- GOD RAYS (Volumetric Light) ---
+        const godRaysGroup = new THREE.Group();
+        const rayGeo = new THREE.ConeGeometry(5, 40, 32, 1, true);
+        const rayMat = new THREE.MeshBasicMaterial({
+            color: 0xffffee,
+            transparent: true,
+            opacity: 0.15,
+            side: THREE.FrontSide,
+            blending: THREE.AdditiveBlending,
+            depthWrite: false,
+        });
+
+        for (let i = 0; i < 5; i++) {
+            const ray = new THREE.Mesh(rayGeo, rayMat);
+            ray.position.set(0, 0, 0);
+            ray.scale.set(1 + Math.random(), 1 + Math.random(), 1 + Math.random());
+            ray.rotation.x = Math.PI; // Point down
+            ray.rotation.z = (Math.random() - 0.5) * 0.5;
+            ray.rotation.y = Math.random() * Math.PI;
+            ray.userData = { speed: 0.02 + Math.random() * 0.02, phase: Math.random() * Math.PI };
+            godRaysGroup.add(ray);
+        }
+        godRaysGroup.position.set(20, 30, 10); // Match sun position roughly
+        godRaysGroup.lookAt(0, 0, 0);
+        scene.add(godRaysGroup);
+
         // --- SHADER-QUALITY WATER ---
         const waterGeo = new THREE.CylinderGeometry(WORLD_RADIUS + 80, WORLD_RADIUS + 80, 5, 64);
         const waterMat = new THREE.MeshStandardMaterial({
@@ -1133,25 +1159,60 @@ const Scene3D: React.FC<Scene3DProps> = ({
             });
 
             // Day/Night & Water
+            // Day/Night Cycle & Atmosphere
             if (sunRef.current) {
-                const dayDuration = 60;
+                const dayDuration = 120; // Slower day (2 min)
                 const dayTime = (time % dayDuration) / dayDuration;
                 const angle = dayTime * Math.PI * 2;
+                const sunHeight = Math.sin(angle);
 
-                sunRef.current.position.set(Math.cos(angle) * 30, Math.sin(angle) * 30, 20);
-                sunRef.current.intensity = Math.max(0.1, Math.sin(angle)) * 1.5;
+                // Sun movement
+                sunRef.current.position.set(Math.cos(angle) * 40, sunHeight * 40, 20);
+                sunRef.current.intensity = Math.max(0, sunHeight) * 1.5;
 
-                // Sky Color
-                const dayColor = new THREE.Color(COLORS.skyTop);
-                const nightColor = new THREE.Color(0x110033);
-                const mixRatio = 0.5 + 0.5 * Math.sin(angle);
-                const curSky = dayColor.clone().lerp(nightColor, 1 - mixRatio);
-                scene.background = curSky;
-                scene.fog.color = curSky;
+                // God Rays follow sun
+                godRaysGroup.position.copy(sunRef.current.position);
+                godRaysGroup.lookAt(0, 0, 0);
+                godRaysGroup.children.forEach(ray => {
+                    ray.rotation.y += delta * ray.userData.speed;
+                    const pulse = 0.1 + Math.sin(time + ray.userData.phase) * 0.05;
+                    (ray.material as THREE.MeshBasicMaterial).opacity = Math.max(0, sunHeight) * pulse;
+                });
+
+                // Dynamic Sky Colors
+                let topColor, fogColor;
+                if (sunHeight > 0.2) { // Day
+                    topColor = new THREE.Color(0x87CEEB); // Sky Blue
+                    fogColor = new THREE.Color(0x87CEEB);
+                } else if (sunHeight > -0.1) { // Sunset/Sunrise
+                    topColor = new THREE.Color(0xff9966); // Orange
+                    fogColor = new THREE.Color(0xff7755); // Reddish Orange
+                } else { // Night
+                    topColor = new THREE.Color(0x0f0c29); // Deep Purple
+                    fogColor = new THREE.Color(0x1a1a2e); // Dark Blue
+                }
+
+                // Smooth Lerp
+                scene.background = (scene.background as THREE.Color).lerp(topColor, delta * 0.5);
+                scene.fog.color = (scene.fog.color as THREE.Color).lerp(fogColor, delta * 0.5);
+
+                // Stars & Fireflies (Visible at Night)
+                const isNight = sunHeight < 0.1;
+                skyGroup.userData.starMesh.material.opacity = THREE.MathUtils.lerp(skyGroup.userData.starMesh.material.opacity, isNight ? 0.8 : 0, delta);
+
+                fireflyGroup.children.forEach(ff => {
+                    const f = ff as THREE.Mesh;
+                    f.position.y += Math.sin(time * 2 + f.userData.glowTime) * 0.01;
+                    f.position.x += Math.cos(time * 0.5 + f.userData.glowTime) * 0.01;
+                    (f.material as THREE.MeshBasicMaterial).opacity = THREE.MathUtils.lerp((f.material as THREE.MeshBasicMaterial).opacity, isNight ? 0.8 + Math.sin(time * 5 + f.userData.glowTime) * 0.2 : 0, delta);
+                });
             }
+
+            // Water Waves
             if (waterRef.current) {
-                waterRef.current.rotation.y += delta * 0.02;
-                waterRef.current.position.y = -3.5 + Math.sin(time * 0.5) * 0.2;
+                waterRef.current.rotation.y += delta * 0.01;
+                waterRef.current.position.y = -3.5 + Math.sin(time * 0.8) * 0.15;
+                (waterRef.current.material as THREE.MeshStandardMaterial).opacity = 0.8 + Math.sin(time * 0.5) * 0.05;
             }
 
             renderer.render(scene, camera);
