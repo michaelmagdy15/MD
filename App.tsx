@@ -247,7 +247,6 @@ const App: React.FC = () => {
       x, y, z, rot, moving,
       type: gameState.character,
       id: myIdRef.current,
-      id: myIdRef.current,
       timestamp: Date.now(),
       lastPunchTime: Date.now() - (players[myIdRef.current]?.lastPunchTime || 0) < 500 ? players[myIdRef.current]?.lastPunchTime : undefined,
       ...(localEmote && (Date.now() - localEmote.time < 3000) ? { emote: localEmote } : {})
@@ -348,7 +347,6 @@ const App: React.FC = () => {
           isNearTreehouse={isNearTreehouse}
           onEnterTreehouse={handleEnterTreehouse}
           isNearBench={isNearBench}
-          isSitting={isSitting}
           isSitting={isSitting}
           onToggleSit={handleToggleSit}
           myCharType={gameState.character}

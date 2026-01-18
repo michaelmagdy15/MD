@@ -27,9 +27,7 @@ interface GameUIProps {
   onEnterTreehouse: () => void;
   isNearBench: boolean;
   isSitting: boolean;
-  isNearBench: boolean;
-  isSitting: boolean;
-  onToggleSit: () => void;
+
   myCharType: CharacterType;
   onPunch: () => void;
 }
@@ -57,8 +55,7 @@ const GameUI: React.FC<GameUIProps> = ({
   onEnterTreehouse,
   isNearBench,
   isSitting,
-  isSitting,
-  onToggleSit,
+
   myCharType,
   onPunch
 }) => {
