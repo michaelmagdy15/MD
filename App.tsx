@@ -332,7 +332,8 @@ const App: React.FC = () => {
           onToggleSit={handleToggleSit}
         />
       </div>
-      );
+    </div>
+  );
 };
 
-      export default App;
+export default App;
